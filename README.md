@@ -47,7 +47,7 @@ python scripts/extract_clip_features.py
 Outputs (gitignored under `data/`):
 
 - `data/features/clip_vitb16.npy`  — `(N, 512)` float16
-- `data/features/index.parquet`    — `row_idx, path, style_name`
+- `data/features/index.csv`        — `row_idx, path, style_name`
 
 
 ## Background and Motivation
