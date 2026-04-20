@@ -3,7 +3,7 @@
 
 Writes:
     data/features/clip_vitb16.npy   — (N, 512) float16
-    data/features/index.parquet     — row_idx, path, style_name
+    data/features/index.csv         — row_idx, path, style_name
 """
 import time
 from pathlib import Path
@@ -63,7 +63,7 @@ def main():
         "row_idx":    np.arange(len(paths), dtype=np.int64),
         "path":       [str(p.relative_to(IMG_DIR)) for p in paths],
         "style_name": [p.parent.name for p in paths],
-    }).to_parquet(OUT_DIR / "index.parquet", index=False)
+    }).to_csv(OUT_DIR / "index.csv", index=False)
 
     print(f"Done in {(time.time()-t0)/60:.1f} min — {len(features)} features saved")
 
