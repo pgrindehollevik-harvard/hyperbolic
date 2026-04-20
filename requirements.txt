@@ -9,3 +9,5 @@ tqdm
 gdown
 torch
 torchvision
+open_clip_torch
+pyarrow

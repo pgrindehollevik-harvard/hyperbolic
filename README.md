@@ -36,6 +36,20 @@ When running notebooks, select the **"Python (hyperbolic)"** kernel.
 
 We use the [WikiArt Refined Dataset](https://github.com/cs-chan/ArtGAN/tree/master/WikiArt%20Dataset) (Tan et al., 2019), containing ~81,000 digitized paintings across 27 artistic styles.
 
+## Feature Extraction
+
+Extract CLIP ViT-B/16 features for all images
+
+```bash
+python scripts/extract_clip_features.py
+```
+
+Outputs (gitignored under `data/`):
+
+- `data/features/clip_vitb16.npy`  — `(N, 512)` float16
+- `data/features/index.parquet`    — `row_idx, path, style_name`
+
+
 ## Background and Motivation
 
 Artistic style is hierarchical: broad traditions branch into fine-grained movements and substyles. Standard deep learning models represent images in Euclidean embedding spaces, which do not naturally encode tree-like structure. Hyperbolic geometry, with exponential volume growth and branch-like structure, is theoretically well-suited for representing hierarchical relationships. This project investigates whether hyperbolic embeddings better capture aesthetic hierarchy than Euclidean embeddings.
