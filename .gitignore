@@ -28,7 +28,6 @@ wandb/
 *.pt
 *.pth
 
-# Local notes (personal study docs, not project deliverables)
 notes/
 
 # OS
