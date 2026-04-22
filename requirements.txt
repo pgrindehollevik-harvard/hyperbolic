@@ -10,3 +10,4 @@ gdown
 torch
 torchvision
 open_clip_torch
+geoopt
