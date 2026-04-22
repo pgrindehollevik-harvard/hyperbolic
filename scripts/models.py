@@ -151,7 +151,6 @@ class ClassifierLayer(nn.Module):
     def forward(self, v: torch.Tensor) -> torch.Tensor:
         # v: (B, d); prototypes: (K, d)
         if self.geometry == "euclidean":
-            # ‖v - p‖₂ via broadcasting
             dists = torch.cdist(v, self.prototypes)  # (B, K)
         else:
             v_exp = v.unsqueeze(1)  # (B, 1, d)
