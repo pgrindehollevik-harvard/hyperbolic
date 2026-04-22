@@ -39,6 +39,7 @@ def main():
               else "cpu")
     print(f"Device: {device}")
 
+
     paths = sorted(IMG_DIR.glob("*/*.jpg"))
     print(f"Images: {len(paths)}")
 
