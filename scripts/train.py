@@ -11,12 +11,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-import geoopt
+try:
+    import geoopt
+except ModuleNotFoundError:
+    geoopt = None
 
 from dataset import FeatureDataset, NUM_CLASSES
 from models import EuclideanHead, PoincareHead, ClassifierLayer
@@ -56,7 +60,6 @@ def plot_loss_curves(losses: dict, run_dir: Path, title: str) -> Path:
     plt.tight_layout()
     out = run_dir / "loss.png"
     plt.savefig(out, dpi=150, bbox_inches="tight")
-    plt.show()
     plt.close(fig)
     return out
 
@@ -136,7 +139,20 @@ def train_euclidean(
         print(f"Epoch {epoch}/{epochs} — train {train_loss:.4f} | val {val_loss:.4f} | top1 {val_top1:.4f}")
 
     ckpt_path = run_dir / "ckpt.pt"
-    torch.save({"head": head.state_dict(), "clf": clf.state_dict(), "epoch": epochs}, ckpt_path)
+    torch.save(
+        {
+            "head": head.state_dict(),
+            "clf": clf.state_dict(),
+            "epoch": epochs,
+            "config": {
+                "geometry": "euclidean",
+                "dim": dim,
+                "dropout": dropout,
+                "curvature": None,
+            },
+        },
+        ckpt_path,
+    )
     print(f"[euclidean d={dim}] saved {ckpt_path}")
 
     plot_path = plot_loss_curves(losses, run_dir, title=f"Euclidean d={dim} — Training Loss")
@@ -158,6 +174,10 @@ def train_hyperbolic(
     run_dir: Path | None = None,
     device: str | None = None,
 ) -> dict:
+    if geoopt is None:
+        raise ImportError(
+            "geoopt is required for hyperbolic training. Install it in the active environment first."
+        )
     _seed_all(seed)
     DEVICE = _pick_device(device)
     print(f"[hyperbolic d={dim}] device={DEVICE}")
@@ -224,7 +244,20 @@ def train_hyperbolic(
         print(f"Epoch {epoch}/{epochs} — train {train_loss:.4f} | val {val_loss:.4f} | top1 {val_top1:.4f}")
 
     ckpt_path = run_dir / "ckpt.pt"
-    torch.save({"head": head.state_dict(), "clf": clf.state_dict(), "epoch": epochs}, ckpt_path)
+    torch.save(
+        {
+            "head": head.state_dict(),
+            "clf": clf.state_dict(),
+            "epoch": epochs,
+            "config": {
+                "geometry": "hyperbolic",
+                "dim": dim,
+                "dropout": dropout,
+                "curvature": curvature,
+            },
+        },
+        ckpt_path,
+    )
     print(f"[hyperbolic d={dim}] saved {ckpt_path}")
 
     plot_path = plot_loss_curves(losses, run_dir, title=f"Hyperbolic d={dim} — Training Loss")
