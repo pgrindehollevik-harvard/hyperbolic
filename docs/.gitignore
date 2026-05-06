@@ -8,6 +8,5 @@
 *.fls
 *.fdb_latexmk
 
-# Compiled report PDF (only the top-level one — figure PDFs in figures/
-# are tracked).
-/main.pdf
+# main.pdf is tracked so reviewers can read the report on GitHub
+# without compiling locally.
