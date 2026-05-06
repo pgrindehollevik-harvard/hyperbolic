@@ -29,12 +29,19 @@ frozen CLIP ViT-B/16 features extracted from WikiArt Refined (81,446 paintings, 
 differing only in the geometry of their output embedding space ($\mathbb{R}^d$
 vs.\ Poincar\'{e} ball of dimension $d$), and compare them on both classification accuracy
 and hierarchy preservation metrics derived from a hand crafted art historical tree.
-We find that the geometry advantage \emph{is} real but \emph{local}: hyperbolic
-embeddings recover sibling and cousin neighborhoods more faithfully (4--5\,pp
-recall@5 advantage that widens with dimension), while Euclidean embeddings
-remain stronger on classification accuracy and global tree-Spearman at every
-scale tested. A hierarchy-aware regularizer added at training time improves
-global tree metrics in both geometries but does not flip the geometry winner.
+We find that the geometry advantage \emph{is} real but \emph{local}:
+hyperbolic embeddings recover sibling and cousin neighborhoods more faithfully
+(4--5\,pp recall@5 advantage that widens with dimension), while Euclidean
+embeddings remain stronger on classification accuracy at every scale tested.
+The picture for global tree fidelity is more nuanced. Against the hand-built
+default reference tree, Euclidean prototypes correlate slightly better than
+hyperbolic ones with tree distances; but the hand-built tree correlates only
+weakly ($\rho{=}0.08$) with a data-driven empirical tree built from CLIP
+feature centroids, and against that empirical tree the global-Spearman gap
+reverses in hyperbolic's favour at every $d \geq 4$ (Phase~4). A
+hierarchy-aware regularizer added at training time improves global tree
+metrics in both geometries but does not flip the geometry winner on either
+the local axis or on classification.
 \end{abstract}
 
 \tableofcontents
