@@ -3,20 +3,25 @@
 
 Across 150 seed-replicated runs spanning embedding dimension,
 curvature, and the strength of a hierarchy-aware loss, the effect of
-geometry on the learned embedding decomposes cleanly along two axes.
+geometry on the learned embedding separates cleanly along two axes.
 Hyperbolic prototype embeddings recover sibling and cousin
 neighborhoods 4--5 percentage points more faithfully than matched
-Euclidean embeddings as measured by recall@5, and the gap widens with
-embedding dimension. Euclidean embeddings retain a 4--6\,pp lead in
-classification accuracy and a 0.05--0.10 lead in class-center / tree
-Spearman across every embedding dimension we tested. The
+Euclidean embeddings as measured by recall@5, and the gap widens
+with embedding dimension. Euclidean embeddings retain a 4--6\,pp
+lead in classification accuracy across every embedding dimension we
+tested. The picture for global tree fidelity is more nuanced: against
+the hand-built default reference, Euclidean leads class-center / tree
+Spearman by $\approx 0.05$--$0.10$, but the hand-built reference tree
+correlates only weakly with a data-driven empirical tree built from
+CLIP feature centroids ($\rho = 0.08$ on pairwise distances), and
+\emph{against the empirical tree}, hyperbolic prototypes lead at
+every $d \geq 4$ (Phase~4, Figure~\ref{fig:phase4}). The
 hierarchy-aware regularizer improves global tree metrics for both
-geometries but does not let hyperbolic surpass Euclidean on
-classification at any tested $\lambda$, and does not erode
-hyperbolic's local advantage. The two geometries trade local
-neighborhood fidelity against global classification accuracy; the
-trade-off persists under the regularizer and under three alternative
-ground-truth trees.
+geometries but does not flip the geometry winner on either local or
+global axes. The local advantage of hyperbolic embeddings is real
+and reference-tree-independent; the global advantage of Euclidean
+embeddings is tree-dependent and disappears against the data's own
+implicit hierarchy.
 
 \msthreeposs{} closest configuration --- $d{=}8$, $c{=}1$, 10 epochs
 --- reported 54.3\,\% Euclidean and 47.3\,\% hyperbolic top-1.
@@ -150,6 +155,87 @@ three training trees: Euclidean leads top-1 by approximately the same
 margin as in Phases~1 and~2, and hyperbolic leads sibling recall by
 approximately the same margin. The qualitative result does not
 depend on the specific reference hierarchy.
+
+\subsection{Phase 4 --- Empirical reference tree}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/phase4_empirical_tree.pdf}
+  \caption{Phase~4: prototype-distance/tree-distance Spearman against
+  the hand-built default tree (blue) and an empirical tree
+  constructed by agglomerative clustering of class-mean CLIP features
+  on the training split (red). The two trees correlate at Spearman
+  $0.08$ on pairwise distances --- nearly orthogonal taxonomies of
+  the same 27 styles. Both geometries' prototype distances align
+  substantially better with the empirical tree ($\sim 0.40$) than
+  with the hand-built tree ($\sim 0.10$). The geometry winner on
+  global tree-Spearman inverts at every $d \geq 4$: against the
+  empirical tree, hyperbolic narrowly leads.}
+  \label{fig:phase4}
+\end{figure}
+
+Phase~3 tested whether retraining against alternative ground-truth
+trees changes which geometry wins. Phase~4 tests a different
+question: what if the hand-built default tree is itself the wrong
+reference, and the global-Spearman gap is partly an artifact of that
+choice? We construct an empirical tree by computing the mean CLIP
+feature vector for each of the 27 styles on the training split,
+running agglomerative clustering with average linkage in Euclidean
+space, and converting the resulting binary dendrogram to an integer
+edge-count distance matrix. The result is an unsupervised reference
+that records what the encoder actually treats as similar, with no
+art-historian in the loop.
+
+The two reference trees correlate weakly. Spearman correlation
+between hand-built and empirical pairwise distances is $0.08$, and
+between chronological (Phase~3) and empirical pairwise distances is
+$0.30$. The hand-built lineage tree and the data-driven tree are
+near-orthogonal taxonomies of the same set of styles.
+
+Re-evaluating the Phase~1 winners against the empirical tree
+inverts the global-Spearman finding. Both geometries' prototype
+distances align far more closely with the empirical tree
+($\rho \approx 0.40$ at every $d$) than with the hand-built tree
+($\rho \in [-0.04, 0.16]$, often near zero). At $d{=}2$ Euclidean
+prototypes lead substantially, but for every $d \geq 4$ hyperbolic
+prototypes are slightly more aligned with the empirical tree:
+$\rho_{\textrm{Hy}} - \rho_{\textrm{Eu}} \in [+0.01, +0.05]$ at
+$d \in \{8, 16, 32, 64\}$. Sibling and cousin recall numbers are
+unchanged, since those metrics measure local label-neighborhood
+agreement and do not depend on a tree at all.
+
+The implication is two-sided. The local advantage of hyperbolic
+embeddings is real and tree-independent. The apparent global
+\emph{disadvantage} reported in Phases~1--3, however, is partly an
+artifact of imposing a hand-built reference tree that the data only
+loosely supports. Against a tree the data itself produces,
+hyperbolic prototypes either tie or modestly beat Euclidean ones at
+the global level. The local-vs-global trade-off becomes a
+local-and-global advantage --- modest, but consistent --- once the
+reference is data-driven.
+
+\subsection{Robustness to class-imbalance handling}
+
+WikiArt's class distribution is heavily skewed (Impressionism has
+$133\times$ more training examples than Action\_painting). All four
+phases above used unweighted cross-entropy, so a fair concern is that
+the geometry comparison is itself an artifact of the loss being
+dominated by the largest classes. We rerun the $d{=}8$ winner of
+each geometry (Euclidean, and hyperbolic at $c{=}0.3$) with
+inverse-frequency class-weighted cross-entropy, three seeds.
+Class-weighted training shifts the absolute numbers as expected ---
+top-1 drops by roughly 6 percentage points for both geometries (Eu
+$64.3 \to 58.3$\,\%; Hy $59.8 \to 53.4$\,\%) while balanced accuracy
+rises sharply (Eu $56.4 \to 65.6$\,\%; Hy $44.5 \to 62.1$\,\%) ---
+but the geometry gap is preserved on every axis we report. Top-1
+remains 5\,pp in Euclidean's favour, sibling recall@5 remains 4\,pp
+in hyperbolic's, and class-center / tree-Spearman against the default
+tree shifts by less than a hundredth. The balanced-accuracy gap
+narrows from 11.9 to 3.5 percentage points, suggesting that
+hyperbolic's main classification weakness in our default setup was
+disproportionately on rare classes, but it remains in Euclidean's
+favour. The local advantage of hyperbolic and the classification
+advantage of Euclidean are both robust to the choice of weighting in
+the cross-entropy loss.
 
 \subsection{Headline comparison}
 \begin{table}[t]

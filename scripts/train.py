@@ -66,6 +66,21 @@ def _tree_dists_tensor(device: torch.device, hierarchy_name: str = "default") ->
     return torch.from_numpy(t).to(device).float()
 
 
+def _class_weights_tensor(device: torch.device) -> torch.Tensor:
+    """Inverse-frequency class weights, normalized so the mean weight is 1.
+
+    Used when class_weighted=True so the cross-entropy loss treats rare
+    leaf styles (Action_painting, Synthetic_Cubism, etc.) on par with
+    common ones (Impressionism). Weights are derived from the training
+    split labels; nothing else changes about the optimization.
+    """
+    train_labels = FeatureDataset("train").labels.numpy()
+    counts = np.bincount(train_labels, minlength=NUM_CLASSES).astype(np.float64)
+    counts = np.clip(counts, a_min=1.0, a_max=None)  # avoid div-by-zero on empties
+    weights = (1.0 / counts) * (counts.sum() / NUM_CLASSES)
+    return torch.from_numpy(weights).float().to(device)
+
+
 def _pick_device(device: str | None) -> torch.device:
     if device is not None:
         return torch.device(device)
@@ -111,6 +126,7 @@ def train_euclidean(
     seed: int = 2090,
     tree_loss_weight: float = 0.0,
     tree_hierarchy: str = "default",
+    class_weighted: bool = False,
     run_dir: Path | None = None,
     device: str | None = None,
 ) -> dict:
@@ -128,7 +144,8 @@ def train_euclidean(
 
     head = EuclideanHead(d_out=dim, dropout=dropout).to(DEVICE)
     clf = ClassifierLayer(num_classes=NUM_CLASSES, dim=dim, geometry="euclidean").to(DEVICE)
-    criterion = torch.nn.CrossEntropyLoss()
+    cls_w = _class_weights_tensor(DEVICE) if class_weighted else None
+    criterion = torch.nn.CrossEntropyLoss(weight=cls_w)
     opt_head = torch.optim.Adam(head.parameters(), lr=lr, weight_decay=weight_decay)
     opt_clf = torch.optim.Adam(clf.parameters(), lr=lr_proto, weight_decay=weight_decay)
 
@@ -230,6 +247,7 @@ def train_hyperbolic(
     seed: int = 2090,
     tree_loss_weight: float = 0.0,
     tree_hierarchy: str = "default",
+    class_weighted: bool = False,
     run_dir: Path | None = None,
     device: str | None = None,
 ) -> dict:
@@ -252,7 +270,8 @@ def train_hyperbolic(
     head = PoincareHead(d_out=dim, dropout=dropout, curvature=curvature).to(DEVICE)
     clf = ClassifierLayer(num_classes=NUM_CLASSES, dim=dim,
                               geometry="hyperbolic", curvature=curvature).to(DEVICE)
-    criterion = torch.nn.CrossEntropyLoss()
+    cls_w = _class_weights_tensor(DEVICE) if class_weighted else None
+    criterion = torch.nn.CrossEntropyLoss(weight=cls_w)
     opt_head = torch.optim.Adam(head.parameters(), lr=lr, weight_decay=weight_decay)
 
     opt_clf = geoopt.optim.RiemannianAdam(clf.parameters(), lr=lr_proto, stabilize=10)
