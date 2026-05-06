@@ -1,0 +1,46 @@
+\documentclass[11pt]{article}
+\input{preamble}
+
+\title{%
+  \textbf{Hyperbolic Embeddings for Hierarchical Style Representation}\\[0.4em]
+  \large Canvas Project \#150\\[0.2em]
+  \large COMPSCI 209B --- Spring 2026
+}
+\author{%
+  Peter Flo \and Luca Grossmann \and Valerie Wang
+}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Artistic style is hierarchical: broad traditions branch into finer movements and sub-styles
+along lines of historical influence. Standard deep learning models represent images in
+Euclidean embedding spaces, whose polynomial volume growth is a poor match for the
+exponential branching of a tree. Hyperbolic geometry, and in particular the Poincar\'{e}
+ball, offers exponential volume growth and is theoretically better suited to embedding
+tree-like structures with low distortion. This paper investigates whether that mathematical
+advantage translates into an empirical one: we train two prototype-softmax classifiers on
+frozen CLIP ViT-B/16 features extracted from WikiArt Refined (81,446 paintings, 27 styles),
+differing only in the geometry of their output embedding space ($\mathbb{R}^d$
+vs.\ Poincar\'{e} ball of dimension $d$), and compare them on both classification accuracy
+and hierarchy-preservation metrics derived from a hand-crafted 11-deep art-historical tree.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{sections/background}
+\input{sections/problem}
+\input{sections/data_eda}
+\input{sections/methods}
+\input{sections/results}
+\input{sections/conclusion}
+\input{sections/broader_impact}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
