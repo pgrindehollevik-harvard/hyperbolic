@@ -1,43 +1,41 @@
 \section{Conclusions \& Discussion}
 \label{sec:conclusion}
 
-\paragraph{What we can claim.} On a 27-style classification task built
-on frozen CLIP features, hyperbolic prototype embeddings produce
-\emph{more} hierarchically faithful local neighborhoods than Euclidean
-ones (sibling and cousin recall@5 advantages of 4--5\,pp), and the gap
-\emph{widens} as the embedding dimension grows. They produce
-\emph{less} hierarchically faithful global structure on classical
-metrics (top-1 accuracy, prototype-tree Spearman, dendrogram F1, mean
-tree distortion) at every scale tested. A hierarchy-aware regularizer
-improves global tree metrics in both geometries but does not flip the
-geometry winner on either local or global axes. These findings are
-stable across three seeds with standard deviations $\leq 1$\,pp on
-top-1 and $\leq 0.01$ on the hierarchy metrics.
+\paragraph{The take.} Hyperbolic geometry helps with one specific kind
+of tree-aware behaviour --- preserving local neighborhoods, so that
+the nearest neighbors of an artwork share its sub-style --- and it
+does not give us a free upgrade on classification or on global tree
+fidelity. The right framing is that geometry is a knob with a clear
+trade-off, not a hyperparameter to tune to a single optimum.
+Practitioners who care about retrieval inside fine-grained taxonomies
+should pick the Poincar\'e ball; practitioners who care about getting
+the label right on a single image should stay Euclidean. The two
+goals are in genuine tension.
 
-\paragraph{What we cannot claim.} We cannot claim that hyperbolic
+\paragraph{What the numbers do not say.} They do not say hyperbolic
 embeddings are universally preferable for hierarchical image data ---
-our results say the opposite for global metrics. We cannot claim that
-the hand-built tree is the ``correct'' style hierarchy; tree-Spearman
-and dendrogram F1 are anchored to that specific taxonomy. We cannot
-generalize to other domains: WikiArt-Refined is medium-scale (81k
-images), Western-canon-heavy, and the labels are themselves debated by
-art historians.
+our results say the opposite on global metrics. They do not say the
+hand-built tree is the \emph{correct} style hierarchy; tree-Spearman
+and dendrogram F1 are anchored to that specific taxonomy and a
+different art-historian would draw it differently. They do not
+generalise beyond medium-scale, Western-canon-heavy WikiArt with a
+frozen CLIP backbone --- a different dataset or a fine-tuned encoder
+could change the picture meaningfully.
 
-\paragraph{Limitations.} Single dataset, single CLIP backbone,
-hand-built tree, and a single hierarchy-aware loss formulation
-(scale-invariant MSE on prototype distances). We did not explore
-hyperbolic versions of the head MLP itself (only the prototypes live
-on the manifold), per-style learnable curvature, or jointly learning
-the tree from the embeddings.
-
-\paragraph{Future work.} Three directions follow naturally.
-\textit{(i)} Hyperbolic neural network layers throughout the head
-\citep{ganea2018hyperbolic} rather than only at the prototype layer ---
-this would let the manifold influence the representation rather than
-just the decision boundary. \textit{(ii)} Learned trees from data
-\citep{chami2020trees}, evaluated against the hand-built tree as one
-of several reference points, would test whether the WikiArt
-hand-built tree is a bottleneck. \textit{(iii)} Extension to
-non-Western traditions where the lineage taxonomy underrepresents
-genuine structure (e.g.\ the East Asian ink-painting traditions
-collapsed into a single Ukiyo-e label here).
+\paragraph{Limitations and the natural extensions.} Three are most
+honest to call out. First, only the prototypes live on the manifold;
+the head MLP is still Euclidean, so the hyperbolic geometry can only
+shape the decision boundary, not the representation itself. A
+genuinely hyperbolic head along the lines of M\"obius layers
+\citep{ganea2018hyperbolic} would let the geometry do more work and
+might shift the trade-off. Second, the regularizer is a single fixed
+loss formulation: scale-invariant MSE on pairwise distances.
+Alternatives that match the rank order of tree distances (a Spearman
+surrogate) or that weight nearby pairs more heavily (Sammon-style)
+might pay smaller classification costs to achieve the same tree
+fidelity. Third, the ground-truth tree is fixed by hand; a learned
+tree along the lines of \citet{chami2020trees} would test whether the
+hand-built taxonomy is itself a bottleneck for the global metrics, and
+in particular whether the local-vs-global gap is partly an artifact of
+asking the embedding to match a tree that the data itself does not
+quite support.

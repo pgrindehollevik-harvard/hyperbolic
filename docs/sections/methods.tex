@@ -1,67 +1,94 @@
 \section{Methods \& Models}
 \label{sec:methods}
 
-\paragraph{Architecture.} A two-layer MLP with GELU and dropout maps frozen
-CLIP ViT-B/16 features ($\mathbb{R}^{512}$) to a $d$-dimensional embedding.
-A geometry-specific head produces the final embedding: identity for the
-Euclidean case, exponential map at the origin for the Poincar\'e ball,
-\(\exp_0^c(u) = \tanh(\sqrt{c}\,\|u\|) \, u / (\sqrt{c}\,\|u\|)\). A
-prototype classifier with one learnable point per style yields logits as
-$-d(z, p_k)$, where $d(\cdot,\cdot)$ is Euclidean or hyperbolic accordingly.
+\paragraph{Architecture.} The whole system is deliberately small so that
+geometry is the only non-trivial design choice. A two-layer MLP with
+GELU and dropout maps frozen CLIP ViT-B/16 features
+\citep{radford2021clip} from $\mathbb{R}^{512}$ to a $d$-dimensional
+embedding. A geometry-specific head produces the final embedding:
+identity for the Euclidean case, the exponential map at the origin
+$\exp_0^c(u) = \tanh(\sqrt{c}\,\|u\|) \, u / (\sqrt{c}\,\|u\|)$ for the
+Poincar\'e ball. A prototype classifier with one learnable point per
+style turns the embedding into 27-way logits via $-d(z, p_k)$, where
+$d(\cdot,\cdot)$ is the Euclidean or Poincar\'e distance. Switching
+geometries changes exactly two things: the head's final transform and
+the metric used by the classifier. Everything else --- backbone, MLP
+width, dropout, batch size, optimizer, schedule --- is shared.
 
-\paragraph{Geometry, distance, and optimization.} The Poincar\'e distance
+\paragraph{Geometry, distance, optimization.} The Poincar\'e distance
 with curvature $c > 0$ is
 \[
   d^c(x, y) = \frac{1}{\sqrt{c}}\,\operatorname{arcosh}\!\left(
     1 + \frac{2c\,\|x-y\|^2}{(1-c\|x\|^2)(1-c\|y\|^2)}
-  \right).
+  \right),
 \]
-Standard linear layers do not preserve the ball, so the prototype
-classifier is the natural choice: logits are distances, with no need for a
-parametric ``softmax head'' inside the manifold. The MLP head is optimized
-with Adam; the hyperbolic prototypes are optimized with Riemannian Adam
-\citep{kochurov2020geoopt}, which projects each update back onto the ball.
+which blows up as either point approaches the boundary at radius
+$1/\sqrt{c}$. A standard linear layer does not preserve the ball, so we
+cannot use a parametric softmax head on top of a hyperbolic embedding.
+The prototype classifier is the natural workaround: logits are
+distances. Adam optimizes the MLP head; Riemannian Adam from
+\texttt{geoopt} \citep{kochurov2020geoopt} optimizes the hyperbolic
+prototypes, projecting each update back onto the manifold so they stay
+inside the ball.
 
-\paragraph{Hierarchy-aware loss.} The MS3 baseline trains with cross-entropy
-only and uses the hand-built tree only at evaluation time. For MS4 we add a
-regularizer that pushes the prototype-prototype distance matrix toward the
-tree distance matrix:
+\paragraph{Hierarchy-aware loss.} The MS3 baseline used the
+hand-built tree only at evaluation time and trained with plain
+cross-entropy. That is the standard approach in the hyperbolic-image
+literature \citep{khrulkov2020hyperbolic}, but it leaves an opening:
+classification alone does not require prototypes to be arranged in a
+way that mirrors the tree, so we cannot blame the geometry for failing
+on tree metrics if the loss never asked for that arrangement. For MS4
+we add a single-term regularizer that pushes the prototype-prototype
+distance matrix toward the tree distance matrix:
 \[
   \mathcal{L} = \mathcal{L}_{CE} + \lambda \cdot \frac{1}{|\mathcal{P}|}
     \sum_{(i,j) \in \mathcal{P}} \!\left(
       \frac{d(p_i, p_j)}{\bar{d}} - \frac{T_{ij}}{\bar{T}}
     \right)^{\!\!2}.
 \]
-The mean-normalization (each pair-distance vector is divided by its mean
-before the squared difference) makes the term scale-invariant: the geometry
-chooses its own absolute embedding scale rather than fighting the
-classification objective for magnitude. $\lambda = 0$ recovers the MS3
-baseline exactly. This regularizer is computed once per gradient step over
-the $\binom{27}{2} = 351$ off-diagonal style pairs --- a negligible cost
-relative to the classification forward/backward.
+The mean-normalization is the design choice that matters: each pair
+vector is divided by its own mean before the squared difference, so the
+loss only constrains the \emph{shape} of the prototype distance matrix
+rather than its absolute scale. The geometry is free to pick the scale
+that classification likes. $\lambda = 0$ recovers MS3 exactly. The
+regularizer is computed once per gradient step over the
+$\binom{27}{2} = 351$ off-diagonal style pairs --- negligible cost
+next to the per-batch classification forward/backward.
 
-\paragraph{Ground-truth trees.} The default tree is a hand-built lineage
-hierarchy following standard art-history references (Renaissance branches
-into Baroque branches into Romanticism; see Appendix~\ref{app:tree}). We
-additionally evaluate two variants: a \emph{chronological} two-level era
-grouping (Renaissance / Baroque-Rococo / 19th century / Early 20th /
-Modern / Non-Western) and a \emph{flat} tree (every leaf is a direct child
-of the root, used as a null since flat tree distances are constant
-off-diagonal and cannot distinguish models).
+\paragraph{Ground-truth trees.} WikiArt does not ship a hierarchy, so
+we build one. The default tree follows standard art-history lineage:
+Renaissance branches into Baroque, Baroque into Rococo, Rococo into
+Romanticism, and so on through Cubism and Abstract Expressionism (the
+full structure is in Appendix~\ref{app:tree}). Because no single tree
+is canonical, Phase~3 also retrains against two alternatives: a
+\emph{chronological} grouping by century (Renaissance / Baroque-Rococo
+/ 19th c.\ / Early 20th c.\ / Modern / Non-Western) and a \emph{flat}
+tree where every style is a direct child of the root --- a deliberate
+null whose distance matrix is constant off-diagonal, so any
+hierarchy-respecting metric must score it near chance.
 
-\paragraph{Training details.} All runs use the supplied 70/30 train/val
-split ($\approx$57k / 24k images), batch size 4096, Adam with $\eta=10^{-3}$
-for the head and $10^{-2}$ for the prototypes, weight decay $10^{-4}$,
-dropout 0.1, gradient clipping at norm 1.0, 30 epochs (training is fast
-because the CLIP features are pre-cached as float16 tensors). Each headline
-configuration is run with three seeds. The full grid (Phases 1--3, see
-Section~\ref{sec:results}) totals $\approx 170$ runs and completed in under
-one hour of wall time on a single Apple M-series GPU.
+\paragraph{Training details.} All 150 runs use the supplied 70/30
+train/val split ($\approx$57k / 24k images), batch size 4096, Adam at
+$\eta=10^{-3}$ for the head and $10^{-2}$ for the prototypes, weight
+decay $10^{-4}$, dropout 0.1, gradient clipping at norm 1.0, 30
+epochs. Pre-caching CLIP features as float16 tensors keeps each run
+under 10 seconds of training time, so the full sweep (Phases 1--3, see
+Section~\ref{sec:results}) finishes in under half an hour of wall time
+on a single Apple M-series GPU. Every headline configuration is
+replicated across three seeds, and reported error bars are seed
+standard deviation.
 
-\paragraph{Evaluation suite.} We report top-1, top-5, and balanced
-accuracy; prototype-tree and class-center-tree Spearman correlation;
-multiplicative tree distortion (mean and worst-case); dendrogram-cluster
-F1 against the default tree; sibling and cousin recall@$k$ for
-$k \in \{5, 10\}$; and Fr\'echet-mean nearest-prototype accuracy on Cubism
-as an interpolation-stability probe. Implementation lives in
-\texttt{scripts/eval.py}.
+\paragraph{Evaluation suite.} A model can earn its keep here in three
+genuinely different ways, so we report metrics covering each:
+\emph{classification} (top-1, top-5, balanced accuracy);
+\emph{global tree fidelity} (Spearman correlation between the learned
+prototype distance matrix and the tree distance matrix, plus
+mean/worst-case multiplicative distortion); and
+\emph{local hierarchy preservation} (sibling and cousin recall@$k$
+among the $k$ nearest neighbors of each validation embedding, for
+$k \in \{5, 10\}$). We also include a hierarchical-clustering check
+(dendrogram-cluster F1 against the default tree) and a Fr\'echet-mean
+nearest-prototype probe on Cubism that tests whether averaged
+embeddings still behave like Cubism. The implementation lives in
+\texttt{scripts/eval.py}; the sweep runner that drives it lives in
+\texttt{scripts/sweep.py}.
