@@ -26,7 +26,7 @@ advantage translates into an empirical one: we train two prototype-softmax class
 frozen CLIP ViT-B/16 features extracted from WikiArt Refined (81,446 paintings, 27 styles),
 differing only in the geometry of their output embedding space ($\mathbb{R}^d$
 vs.\ Poincar\'{e} ball of dimension $d$), and compare them on both classification accuracy
-and hierarchy-preservation metrics derived from a hand-crafted 11-deep art-historical tree.
+and hierarchy preservation metrics derived from a hand crafted art historical tree.
 We find that the geometry advantage \emph{is} real but \emph{local}: hyperbolic
 embeddings recover sibling and cousin neighborhoods more faithfully (4--5\,pp
 recall@5 advantage that widens with dimension), while Euclidean embeddings
