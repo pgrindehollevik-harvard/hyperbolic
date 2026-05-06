@@ -33,7 +33,9 @@ from analysis import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-FIG_DIR = REPO_ROOT / "report" / "figures"
+# Figures live in docs/figures/ alongside the report sections; report/ is a
+# legacy single-file draft kept around for reference.
+FIG_DIR = REPO_ROOT / "docs" / "figures"
 
 
 def _save(fig: plt.Figure, name: str) -> None:

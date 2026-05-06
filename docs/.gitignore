@@ -7,4 +7,7 @@
 *.synctex.gz
 *.fls
 *.fdb_latexmk
-*.pdf
+
+# Compiled report PDF (only the top-level one — figure PDFs in figures/
+# are tracked).
+/main.pdf

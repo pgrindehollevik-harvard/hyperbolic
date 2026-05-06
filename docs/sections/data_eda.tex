@@ -1,2 +1,17 @@
 \section{Data \& EDA}
-% TODO
+\label{sec:data}
+
+\TODO{Valerie}{One paragraph each on:
+\textit{(a)} Dataset summary --- WikiArt Refined \citep{tan2019wikiart},
+$\sim$81k paintings, 27 styles, 70/30 train/val supplied, scale of
+class imbalance with one or two specific examples (Impressionism
+dominates; Action\_painting and Synthetic\_Cubism each $<$1k). Cite
+our MS2 EDA but do not repeat its tables.
+\textit{(b)} Why the imbalance pushes us toward balanced-accuracy
+reporting and a prototype classifier rather than a class-frequency-tied
+softmax.
+\textit{(c)} Why the choice of ground-truth tree is non-unique ---
+WikiArt ships no hierarchy, art-history offers several, and we
+therefore evaluate sensitivity (Section~\ref{sec:results}). Include 1
+small figure: distance matrices of the three trees side-by-side, lifted
+from \texttt{notebooks/ms4\_main.ipynb}.}
