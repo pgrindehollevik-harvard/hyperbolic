@@ -356,6 +356,100 @@ def plot_confusion_block_tree(
     return fig
 
 
+def plot_knn_image_grid(
+    ckpt_path: Path,
+    query_indices: list[int] | None = None,
+    n_queries: int = 4,
+    k: int = 5,
+    split: str = "val",
+    device: str | None = None,
+    seed: int = 0,
+    wikiart_dir: Path | None = None,
+    figsize: tuple[float, float] | None = None,
+) -> plt.Figure:
+    """For each query, display the query painting next to its k nearest
+    neighbors in embedding space. Requires data/wikiart/ for raw images.
+
+    The figure has n_queries rows and k+1 columns: [query, NN-1, ..., NN-k].
+    """
+    from PIL import Image
+    import sys as _sys
+    import torch
+    _sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+    from eval import load_split_metadata
+    from hierarchy import load_style_classes
+    from models import poincare_distance
+
+    embeddings, labels, _, meta = _embed_split(ckpt_path, split=split, device=device)
+    split_df = load_split_metadata(split)
+
+    if wikiart_dir is None:
+        wikiart_dir = REPO_ROOT / "data" / "wikiart"
+    wikiart_dir = Path(wikiart_dir)
+
+    rng = np.random.default_rng(seed)
+    if query_indices is None:
+        # Pick n_queries from distinct, well-populated styles for variety.
+        query_indices = []
+        for label in rng.permutation(int(labels.max()) + 1):
+            mask = np.where(labels == label)[0]
+            if len(mask) == 0:
+                continue
+            query_indices.append(int(rng.choice(mask)))
+            if len(query_indices) >= n_queries:
+                break
+    query_indices = list(query_indices)
+    n_queries = len(query_indices)
+
+    embeddings_t = torch.from_numpy(embeddings)
+    q_emb = embeddings_t[query_indices]
+    if meta["geometry"] == "euclidean":
+        dists = torch.cdist(q_emb, embeddings_t)
+    else:
+        c = float(meta["curvature"])
+        dists = poincare_distance(
+            q_emb.unsqueeze(1), embeddings_t.unsqueeze(0), curvature=c,
+        )
+
+    for row, q_idx in enumerate(query_indices):
+        dists[row, q_idx] = float("inf")
+    topk = dists.topk(k, dim=1, largest=False).indices.numpy()
+
+    style_names = load_style_classes()
+
+    def _load(path):
+        img = Image.open(wikiart_dir / path).convert("RGB")
+        img.thumbnail((180, 180))
+        return img
+
+    if figsize is None:
+        figsize = (1.7 * (k + 1), 1.9 * n_queries)
+    fig, axes = plt.subplots(n_queries, k + 1, figsize=figsize)
+    if n_queries == 1:
+        axes = axes[None, :]
+
+    for row, q_idx in enumerate(query_indices):
+        q_path = split_df.iloc[q_idx]["path"]
+        axes[row, 0].imshow(_load(q_path))
+        axes[row, 0].set_title(f"query · {style_names[int(labels[q_idx])]}", fontsize=7)
+        axes[row, 0].axis("off")
+        for col, n_idx in enumerate(topk[row]):
+            n_path = split_df.iloc[int(n_idx)]["path"]
+            axes[row, col + 1].imshow(_load(n_path))
+            axes[row, col + 1].set_title(style_names[int(labels[int(n_idx)])], fontsize=7)
+            axes[row, col + 1].axis("off")
+
+    fig.suptitle(
+        f"{meta['geometry']} d={meta['dim']}"
+        + (f", c={meta['curvature']}" if meta["geometry"] == "hyperbolic" else "")
+        + f" — kNN (k={k})",
+        fontsize=10,
+    )
+    fig.tight_layout()
+    return fig
+
+
 def format_headline_for_report(table: pd.DataFrame) -> pd.DataFrame:
     """Convert the headline table to a "Eu vs Hy" mean±std string format."""
     metric_keys = list(HEADLINE_METRICS.keys())
