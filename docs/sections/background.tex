@@ -1,15 +1,31 @@
 \section{Background \& Motivation}
 \label{sec:background}
+Artistic style is hierarchical. Broad traditions branch into finer
+movements, and finer movements branch again into sub-styles along
+lines of historical influence: Early Renaissance leads to Baroque,
+Baroque to Romanticism, Romanticism to Impressionism, and
+Impressionism to Cubism ect. An
+embedding that reflects this branching structure should be more
+useful for tasks that depend on it, such as influence-aware retrieval 
+and educational tools that organize
+collections by lineage rather than by raw visual similarity alone.
 
-\TODO{Luca}{Three short paragraphs covering: \textit{(i)} why artistic
-style is hierarchical and who cares about modeling that structure
-(digital humanities, museum-catalog retrieval, educational tools);
-\textit{(ii)} why Euclidean embeddings have a known mismatch with
-tree-like data (polynomial vs.\ exponential ball-volume growth) and what
-hyperbolic geometry offers
-\citep{nickel2017poincare,ganea2018hyperbolic,sala2018representation};
-\textit{(iii)} what is and isn't already established for image
-embeddings \citep{khrulkov2020hyperbolic} and what gap our study
-addresses --- a style-specific, hand-built tree, the first per-curvature
-+ per-$\lambda$ ablation we are aware of, and a sensitivity check
-against alternative trees.}
+
+Standard image embeddings live in $\mathbb{R}^d$. In this space, the volume of
+a ball at radius $r$ grows polynomially in $r$. A tree, by contrast,
+has a node count at depth $k$ that grows exponentially in $k$. Forcing
+tree-like data into Euclidean coordinates therefore distorts pairwise
+distances, and the distortion widens as the tree deepens. Hyperbolic
+geometry, and the Poincar\'{e} ball in particular, exhibits
+exponential volume growth and embeds trees with low distortion
+\citep{nickel2017poincare,sala2018representation}. Riemannian
+optimization on the ball is now standard
+(\texttt{geoopt} \citep{kochurov2020geoopt}), so the geometric advantage
+can be tested empirically rather than argued for from theory alone.
+
+
+Hyperbolic image embeddings have been shown to help on few-shot
+benchmarks \citep{khrulkov2020hyperbolic}, but it remains open whether
+the advantage holds for hand-built
+hierarchies. We explore this question through a sweep over curvature, 
+dimension and $\lambda$ against a Euclidean baseline and a sensitivity check across alternative reference trees.
