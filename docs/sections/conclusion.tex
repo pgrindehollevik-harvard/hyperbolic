@@ -1,2 +1,43 @@
 \section{Conclusions \& Discussion}
-% TODO
+\label{sec:conclusion}
+
+\paragraph{What we can claim.} On a 27-style classification task built
+on frozen CLIP features, hyperbolic prototype embeddings produce
+\emph{more} hierarchically faithful local neighborhoods than Euclidean
+ones (sibling and cousin recall@5 advantages of 4--5\,pp), and the gap
+\emph{widens} as the embedding dimension grows. They produce
+\emph{less} hierarchically faithful global structure on classical
+metrics (top-1 accuracy, prototype-tree Spearman, dendrogram F1, mean
+tree distortion) at every scale tested. A hierarchy-aware regularizer
+improves global tree metrics in both geometries but does not flip the
+geometry winner on either local or global axes. These findings are
+stable across three seeds with standard deviations $\leq 1$\,pp on
+top-1 and $\leq 0.01$ on the hierarchy metrics.
+
+\paragraph{What we cannot claim.} We cannot claim that hyperbolic
+embeddings are universally preferable for hierarchical image data ---
+our results say the opposite for global metrics. We cannot claim that
+the hand-built tree is the ``correct'' style hierarchy; tree-Spearman
+and dendrogram F1 are anchored to that specific taxonomy. We cannot
+generalize to other domains: WikiArt-Refined is medium-scale (81k
+images), Western-canon-heavy, and the labels are themselves debated by
+art historians.
+
+\paragraph{Limitations.} Single dataset, single CLIP backbone,
+hand-built tree, and a single hierarchy-aware loss formulation
+(scale-invariant MSE on prototype distances). We did not explore
+hyperbolic versions of the head MLP itself (only the prototypes live
+on the manifold), per-style learnable curvature, or jointly learning
+the tree from the embeddings.
+
+\paragraph{Future work.} Three directions follow naturally.
+\textit{(i)} Hyperbolic neural network layers throughout the head
+\citep{ganea2018hyperbolic} rather than only at the prototype layer ---
+this would let the manifold influence the representation rather than
+just the decision boundary. \textit{(ii)} Learned trees from data
+\citep{chami2020trees}, evaluated against the hand-built tree as one
+of several reference points, would test whether the WikiArt
+hand-built tree is a bottleneck. \textit{(iii)} Extension to
+non-Western traditions where the lineage taxonomy underrepresents
+genuine structure (e.g.\ the East Asian ink-painting traditions
+collapsed into a single Ukiyo-e label here).

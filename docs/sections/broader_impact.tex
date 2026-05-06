@@ -1,2 +1,28 @@
 \section{Broader Impact}
-% TODO
+\label{sec:impact}
+
+The system we study is small (a 27-way style classifier on cached
+features), but the design choices have broader implications. Three
+points worth flagging.
+
+First, our default ground-truth tree is built from a Western,
+lineage-based art-history canon. Distance metrics computed against it
+implicitly endorse that taxonomy. The Phase~3 ablation against
+alternative trees is partial mitigation; deployment in a museum or
+educational context should make the choice of tree explicit and
+revisable rather than hard-coded.
+
+Second, the WikiArt corpus is biased toward European painting and
+sparsely represents non-Western traditions (Ukiyo-e is the only
+non-Western top-level category). A retrieval system trained on this
+data will under-rank non-Western works for ambiguous queries, and
+hyperbolic geometry --- which we show preserves local hierarchy more
+faithfully --- could amplify that effect by tightening neighborhoods
+inside the dominant taxonomy. Users of any downstream system should
+be informed of this bias.
+
+Third, hyperbolic representations of style structure could in principle
+be used to attribute or authenticate paintings. We do not endorse such
+use without human-expert review: the classification accuracies reported
+here ($\sim$50--65\,\% top-1 over 27 styles) are far below the
+threshold required for legal or commercial decisions.

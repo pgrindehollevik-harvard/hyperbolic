@@ -1,2 +1,153 @@
 \section{Results \& Interpretation}
-% TODO
+\label{sec:results}
+
+\paragraph{Headline.} Across $\sim$140 seed-replicated runs, hyperbolic
+geometry reliably wins on \emph{local} hierarchy structure
+(sibling/cousin retrieval) and reliably loses on \emph{global}
+classification and tree-Spearman. Adding a hierarchy-aware loss
+($\lambda > 0$) helps both geometries on global tree metrics but does
+not let hyperbolic surpass Euclidean on classification accuracy. The
+choice of geometry should therefore be driven by which type of
+hierarchy preservation matters for the downstream application, not by
+treating one as universally superior.
+
+\subsection{Phase 1 --- Scaling sweep}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/phase1_scaling.pdf}
+  \caption{Phase~1: metrics versus embedding dimension $d$ (90 runs;
+  3 seeds per config). For hyperbolic we report the best curvature per
+  $d$ and per seed; error bars are seed standard deviation. Top-1
+  accuracy saturates near $d=16$ for both geometries, with Euclidean
+  ahead by 4--6\,pp at $d \geq 4$. Sibling recall@5 \emph{decreases}
+  with $d$ for Euclidean but remains stable for hyperbolic, opening a
+  5\,pp gap by $d=64$.}
+  \label{fig:phase1}
+\end{figure}
+
+Phase~1 sweeps geometry $\times$ $d \in \{2,4,8,16,32,64\}$ $\times$
+$c \in \{0.1, 0.3, 1, 3\}$ over three seeds (90 configurations,
+$\sim$14~min wall time on a single Apple M-series GPU).
+Figure~\ref{fig:phase1} shows three findings. \textit{(i)} Top-1
+accuracy saturates near $d=16$ for both geometries: Euclidean reaches
+65.9\,\% and hyperbolic 60.6\,\%, with the gap stable rather than
+closing as $d$ grows. \textit{(ii)} Local hierarchy structure tells
+the opposite story --- sibling recall@5 \emph{decreases} for Euclidean
+as $d$ grows (from 0.221 at $d{=}2$ to 0.142 at $d{=}64$) but stays
+near 0.19 for hyperbolic. The two geometries are tied on local
+hierarchy at $d=2$ and split apart as Euclidean gains capacity.
+\textit{(iii)} Curvature trades top-1 for hierarchy fidelity within
+hyperbolic alone: at $d=8$, $c=0.3$ maximises top-1 (59.8\,\%) while
+$c=3.0$ maximises sibling recall (0.230). Pure scaling does not close
+the global-metric gap.
+
+\subsection{Phase 2 --- Hierarchy-aware loss}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/phase2_lambda.pdf}
+  \caption{Phase~2: top-1, class-center / tree Spearman, mean tree
+  distortion, and sibling recall@5 versus the hierarchy-aware loss
+  weight $\lambda$ at $d{=}8$, $c{=}1$ (3 seeds per point). The
+  regularizer drives tree-Spearman from $\sim$0.3 to $\sim$0.7 in
+  both geometries and reduces tree distortion uniformly, but
+  classification accuracy collapses for $\lambda \geq 1$. The
+  hyperbolic top-1 advantage \emph{never} catches up to Euclidean.
+  Sibling recall is stable for hyperbolic across all $\lambda$; for
+  Euclidean it only rises at the largest tested $\lambda$.}
+  \label{fig:phase2}
+\end{figure}
+
+Phase~2 sweeps $\lambda \in \{0, 0.1, 0.3, 1, 3\}$ at $d \in \{8, 16\}$
+with $c=1$ and three seeds. The loss is the scale-invariant MSE
+between prototype-prototype distances and tree distances introduced in
+Section~\ref{sec:methods}. Figure~\ref{fig:phase2} shows the four
+panels. \textit{Mild regularization is a Pareto improvement.} At
+$\lambda{=}0.1$, Euclidean $d{=}8$ \emph{gains} 0.7\,pp top-1
+(65.0\,\% vs.\ 64.3\,\% baseline) and improves tree-Spearman from
+0.292 to 0.345; hyperbolic similarly gains slightly on top-1 and gains
+2 points of sibling recall. \textit{Strong regularization buys
+hierarchy at classification cost.} At $\lambda{=}3$, both geometries
+reach tree-Spearman $\approx 0.7$ but top-1 collapses --- to
+46.9\,\% for Euclidean and 37.4\,\% for hyperbolic. \textit{The
+geometry winner does not flip.} At every $\lambda$ tested, Euclidean
+has higher top-1 than hyperbolic, and at every $\lambda$ hyperbolic
+has higher sibling recall. The local-vs-global trade-off observed in
+Phase~1 is preserved under the regularizer.
+
+\subsection{Phase 3 --- Tree-variant ablation}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/phase3_tree_variants.pdf}
+  \caption{Phase~3: each geometry trained with $\lambda{=}1$ at $d{=}8$
+  against three different ground-truth trees, then evaluated against
+  the default tree. Bars are seed means; whiskers are seed standard
+  deviation. Top-1 stays higher for chronological and flat training
+  because their constraint is easier to satisfy without distorting the
+  classification objective; tree-Spearman against the default tree
+  collapses for chronological and flat (the training signal does not
+  align with the eval reference). The geometry winner does not change
+  on any panel: Euclidean wins top-1 on every tree, hyperbolic wins
+  sibling recall on every tree.}
+  \label{fig:phase3}
+\end{figure}
+
+Phase~3 fixes $\lambda{=}1$, $d{=}8$, $c{=}1$ and varies the
+\emph{training} tree across $\{\textrm{default}, \textrm{chronological},
+\textrm{flat}\}$ while always evaluating against the default tree
+(otherwise tree-Spearman is not comparable across runs).
+Figure~\ref{fig:phase3} shows the result. Training against the
+chronological or flat tree pushes top-1 back up to the
+$\lambda{=}0$ baseline (around 65\,\% for Euclidean, 60\,\% for
+hyperbolic) because the constraint is easier to satisfy ---
+chronological is a coarser tree, flat has constant pairwise distances
+so the loss can be satisfied trivially. Tree-Spearman against the
+default tree drops to $\approx 0.14$ in both alternatives,
+confirming that the regularizer only helps the metric anchored to the
+\emph{training} tree. Crucially, the local-vs-global trade-off
+\emph{does not} depend on the choice of training tree: Euclidean wins
+top-1 on every tree (Phase~3 column, Figure~\ref{fig:phase3} panel~1),
+and hyperbolic wins sibling recall on every tree (panel~4). The
+qualitative conclusion is robust to the specific ground-truth
+hierarchy.
+
+\subsection{Headline comparison}
+\begin{table}[t]
+  \centering
+  \small
+  \input{figures/headline_results.tex}
+  \caption{Best Euclidean vs.\ best hyperbolic configuration across
+  Phases 1--2, selected per geometry by mean top-1 accuracy across
+  seeds. Mean $\pm$ seed standard deviation. Euclidean wins on every
+  global metric except sibling and cousin recall, where hyperbolic
+  retains a 4--5 percentage point lead.}
+  \label{tab:headline}
+\end{table}
+
+\subsection{Qualitative analysis}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/poincare_disk_d2.pdf}
+  \caption{Prototype layouts at $d{=}2$ (best curvature per geometry).
+  Each large dot is a learned style prototype; small dots are a sample
+  of validation embeddings. The dashed circle on the right marks the
+  Poincar\'e ball boundary at radius $1/\sqrt{c}$. Hyperbolic
+  prototypes concentrate near the boundary --- the exponential-volume
+  regime --- while Euclidean prototypes scatter without structural
+  pressure. Theoretical prediction
+  \citep{nickel2017poincare,sala2018representation} made visible on a
+  real dataset.}
+  \label{fig:disk}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/confusion_block_d8.pdf}
+  \caption{Row-normalized confusion matrices at $d{=}8$, rows and
+  columns permuted by a depth-first traversal of the default style
+  tree. Both models concentrate mistakes in near-diagonal blocks ---
+  errors predominantly fall on hierarchically adjacent styles. The
+  hyperbolic block structure is visibly softer near the diagonal,
+  consistent with its higher sibling and cousin recall.}
+  \label{fig:confusion}
+\end{figure}

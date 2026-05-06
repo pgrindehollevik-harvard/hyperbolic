@@ -1,0 +1,53 @@
+\appendix
+
+\section{Default style hierarchy}
+\label{app:tree}
+
+The default ground-truth tree, hand-built from standard art-history
+references and used as the primary evaluation reference throughout the
+paper. The complete definition lives in
+\texttt{scripts/hierarchy.py:STYLE\_HIERARCHY}.
+
+\begin{verbatim}
+Root
+|-- Early_Renaissance
+|   |-- Northern_Renaissance
+|   `-- High_Renaissance
+|       `-- Mannerism_Late_Renaissance
+|           `-- Baroque
+|               `-- Rococo
+|                   `-- Romanticism
+|                       |-- Realism
+|                       |   |-- Contemporary_Realism
+|                       |   `-- Impressionism
+|                       |       `-- Post_Impressionism
+|                       |           |-- Pointillism
+|                       |           |-- Fauvism
+|                       |           `-- Cubism
+|                       |               |-- Analytical_Cubism
+|                       |               `-- Synthetic_Cubism
+|                       `-- Symbolism
+|                           |-- Art_Nouveau
+|                           `-- Expressionism
+|                               `-- Abstract_Expressionism
+|                                   |-- Action_painting
+|                                   |-- Color_Field_Painting
+|                                   `-- Minimalism
+|-- Pop_Art
+|   `-- New_Realism
+|-- Ukiyo_e
+`-- Naive_Art_Primitivism
+\end{verbatim}
+
+\section{Sweep configuration}
+
+The sweep CSV (\texttt{notebooks/sweep\_results.csv}, 150 rows) records,
+for every config, the full set of training hyperparameters and every
+evaluation metric. To reproduce:
+
+\begin{verbatim}
+python scripts/sweep.py --phase 1 --device mps   # ~14 min, 90 configs
+python scripts/sweep.py --phase 2 --device mps   # ~10 min, 48 configs
+python scripts/sweep.py --phase 3 --device mps   # ~3 min,  18 configs
+python scripts/make_figures.py                   # regenerates docs/figures
+\end{verbatim}
