@@ -217,6 +217,178 @@ def style_entropy(labels: np.ndarray, indices: list[int]) -> float:
     return float(entropy / max_e) if max_e > 0 else 0.0
 
 
+@st.cache_resource(show_spinner=False)
+def _tree_dist_matrix() -> np.ndarray:
+    from hierarchy import distance_matrix
+
+    return distance_matrix(load_style_classes())
+
+
+def score_iteration(
+    geo_name: str,
+    geometry: str,
+    curvature: float,
+    bundle: dict,
+    candidates: list[int],
+    liked: set[int],
+) -> dict:
+    """Per-iteration interpretable metrics for one geometry.
+
+    All metrics are computed against the *current* batch (candidates) and the
+    *current* liked set, so the scorecard tracks the state the user is
+    looking at right now.
+    """
+    labels = bundle["labels"]
+    metrics: dict[str, float] = {}
+
+    # Diversity / drift / boundary: defined regardless of liked set.
+    metrics["batch_entropy"] = style_entropy(labels, candidates)
+    metrics["centroid_drift"] = float(st.session_state.get(f"drift_{geo_name}", 0.0))
+    if geometry == "hyperbolic":
+        history = st.session_state.get(f"history_{geo_name}", [])
+        if history:
+            metrics["boundary_dist"] = boundary_distance(
+                history[-1]["centroid"], curvature
+            )
+        else:
+            metrics["boundary_dist"] = float("nan")
+    else:
+        metrics["boundary_dist"] = float("nan")
+
+    # On-target metrics: defined only once the user has expressed intent.
+    if liked:
+        from collections import Counter
+
+        liked_arr = np.array(sorted(liked))
+        liked_labels = labels[liked_arr]
+        dominant = Counter(liked_labels.tolist()).most_common(1)[0][0]
+        batch_labels = labels[np.array(candidates)]
+
+        metrics["style_purity"] = float((batch_labels == dominant).mean())
+        T = _tree_dist_matrix()
+        metrics["mean_tree_dist_to_intent"] = float(
+            T[dominant, batch_labels].mean()
+        )
+    else:
+        metrics["style_purity"] = float("nan")
+        metrics["mean_tree_dist_to_intent"] = float("nan")
+
+    return metrics
+
+
+def render_scorecard(
+    scores_eu: dict,
+    scores_hy: dict,
+    candidates_eu: list[int],
+    candidates_hy: list[int],
+) -> None:
+    """Side-by-side scorecard comparing the two geometries on the current
+    iteration. Where 'better' has a defined direction, marks the winner."""
+    overlap = len(set(candidates_eu) & set(candidates_hy))
+
+    rows = []
+    specs = [
+        # (key, label, direction, format)
+        ("style_purity",
+         "Style purity @16",
+         "high",
+         "{:.0%}",
+         "Fraction of the displayed batch that matches the dominant style of "
+         "your liked set. Higher = more on-target retrieval."),
+        ("mean_tree_dist_to_intent",
+         "Tree distance to intent",
+         "low",
+         "{:.2f}",
+         "Mean tree-distance (in the hand-built style hierarchy) between each "
+         "displayed image's style and the dominant liked style. Lower = "
+         "closer cousins."),
+        ("batch_entropy",
+         "Batch diversity (entropy)",
+         None,
+         "{:.2f}",
+         "Normalized Shannon entropy of style labels in the batch (0 = single "
+         "style, 1 = uniformly distributed). Not strictly better/worse — high "
+         "diversity helps exploration; low diversity helps convergence."),
+        ("centroid_drift",
+         "Centroid drift / round",
+         None,
+         "{:.3f}",
+         "Distance the centroid moved on the most recent refine, in the "
+         "geometry-native unit (L2 for Euclidean, Poincaré distance for "
+         "hyperbolic). Lower = more stable iteration; the units are not "
+         "directly comparable across columns."),
+        ("boundary_dist",
+         "Disk boundary distance",
+         "high",
+         "{:.3f}",
+         "Hyperbolic only: distance from the centroid to the Poincaré radius "
+         "1/√c. Approaches 0 when the centroid drifts to the boundary, where "
+         "Poincaré distances diverge — a known failure mode."),
+    ]
+
+    for key, label, direction, fmt, _help in specs:
+        eu = scores_eu.get(key, float("nan"))
+        hy = scores_hy.get(key, float("nan"))
+        eu_str = fmt.format(eu) if not (isinstance(eu, float) and np.isnan(eu)) else "—"
+        hy_str = fmt.format(hy) if not (isinstance(hy, float) and np.isnan(hy)) else "—"
+
+        winner = "—"
+        if direction and not (
+            (isinstance(eu, float) and np.isnan(eu))
+            or (isinstance(hy, float) and np.isnan(hy))
+        ):
+            if abs(eu - hy) > 1e-9:
+                if direction == "high":
+                    winner = "Euclidean ✓" if eu > hy else "Hyperbolic ✓"
+                else:
+                    winner = "Euclidean ✓" if eu < hy else "Hyperbolic ✓"
+
+        rows.append(
+            {
+                "metric": label,
+                "euclidean": eu_str,
+                "hyperbolic": hy_str,
+                "better on this iteration": winner,
+            }
+        )
+
+    rows.append(
+        {
+            "metric": "Cross-column batch overlap",
+            "euclidean": f"{overlap}/16",
+            "hyperbolic": f"{overlap}/16",
+            "better on this iteration": "—",
+        }
+    )
+
+    st.markdown("### Performance scorecard")
+    st.caption(
+        "Same liked set across both columns? The metrics tell you where the "
+        "geometries differ. Hover the column headers in the legend below for "
+        "definitions."
+    )
+    st.dataframe(
+        pd.DataFrame(rows),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    with st.expander("metric definitions", expanded=False):
+        for _, label, direction, _, help_text in specs:
+            arrow = (
+                "↑ higher is better" if direction == "high"
+                else "↓ lower is better" if direction == "low"
+                else "↔ no canonical direction"
+            )
+            st.markdown(f"**{label}** ({arrow}) — {help_text}")
+        st.markdown(
+            "**Cross-column batch overlap** (↔ contextual) — number of "
+            "images in both columns' current batch out of 16. High overlap "
+            "means the geometries agree at this iteration; low overlap is "
+            "the divergence we expect to see grow with rounds."
+        )
+
+
 # ----------------------------------------------------------------------------
 # State
 # ----------------------------------------------------------------------------
@@ -529,6 +701,21 @@ def main() -> None:
     style_names = load_style_classes()
     cur_eu = 1.0
     cur_hy = float(bundle_hy["meta"]["curvature"])
+
+    # Performance scorecard at the top — computed against the *current* state.
+    scores_eu = score_iteration(
+        "eu", "euclidean", cur_eu, bundle_eu,
+        st.session_state["candidates_eu"], st.session_state["liked_eu"],
+    )
+    scores_hy = score_iteration(
+        "hy", "hyperbolic", cur_hy, bundle_hy,
+        st.session_state["candidates_hy"], st.session_state["liked_hy"],
+    )
+    render_scorecard(
+        scores_eu, scores_hy,
+        st.session_state["candidates_eu"], st.session_state["candidates_hy"],
+    )
+    st.markdown("---")
 
     col_eu, col_hy = st.columns(2, gap="medium")
 

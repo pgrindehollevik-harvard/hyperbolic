@@ -21,6 +21,30 @@ columns will diverge. Click **Refine** under a column and the demo:
 
 Repeat. The two columns drift apart over rounds — that's the artifact.
 
+## Performance scorecard
+
+At the top of the page, a side-by-side scorecard compares both geometries
+on the *current* iteration. Five metrics, each annotated with whether
+"better" has a defined direction:
+
+| metric | direction | what it measures |
+|---|---|---|
+| **Style purity @16** | ↑ higher | fraction of the displayed batch matching the dominant liked style |
+| **Tree distance to intent** | ↓ lower | mean tree-distance (in the hand-built hierarchy) between batch styles and the dominant liked style |
+| **Batch diversity** (entropy) | ↔ contextual | normalized Shannon entropy of style labels in the batch |
+| **Centroid drift / round** | ↔ contextual | distance the centroid moved on the most recent refine, geometry-native units |
+| **Disk boundary distance** | ↑ higher | hyperbolic only: distance from centroid to Poincaré radius 1/√c (approaches 0 = failure mode) |
+| **Cross-column batch overlap** | ↔ contextual | how many of the 16 retrieved are shared between the two columns |
+
+The "better on this iteration" column flags the winner where the
+direction is unambiguous. After three Cubism likes plus one refine in
+our smoke test, the scorecard reports: Euclidean wins purity (75% vs
+56%), Euclidean wins tree distance (1.19 vs 2.94), hyperbolic edges
+out on diversity (0.31 vs 0.25), Euclidean wins stability by 24×
+(drift 0.05 vs 1.2), and the hyperbolic centroid sits 0.011 from the
+disk boundary — already in the failure zone after a single refine.
+That's the artifact in numbers.
+
 ## Live metrics per column
 
 Above each grid:
