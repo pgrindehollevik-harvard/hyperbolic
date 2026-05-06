@@ -294,23 +294,32 @@ $61.1$\,\% balanced accuracy.
 \item \textbf{$k$-NN-5} retrieval on raw CLIP features achieves
 $63.5$\,\% top-1 and $58.8$\,\% balanced accuracy. Sibling recall@5
 is $0.160$ on default-tree relations and $0.366$ on empirical-tree
-relations.
+relations; cousin recall@5 is $0.277 / 0.206$.
 \end{itemize}
 
-The Euclidean prototype classifier matches but does not beat the
-logistic regression on top-1 ($64.3$\,\% vs.\ $64.1$\,\%) and
-matches but does not beat $k$-NN-5 on sibling recall ($0.149 / 0.356$
-vs.\ $0.160 / 0.366$). The hyperbolic prototype classifier is
-$\sim 4$\,pp behind logistic on top-1 ($59.8$\,\%) but
-$3.5$--$5$\,pp \emph{ahead} of $k$-NN-5 on sibling recall
-($0.195 / 0.416$). Figure~\ref{fig:pareto} plots the full
-top-1-vs-sibling-recall scatter: the Euclidean cluster sits in the
-lower-right where $k$-NN already lives; only the hyperbolic
-configurations populate the upper portion of the plot. On this
-dataset and with this encoder, the trained Euclidean prototype
-classifier provides no detectable improvement over a linear head;
-the trained hyperbolic prototype classifier provides an improvement
-over the encoder only on local hierarchy.
+Read against these baselines, the comparison sharpens. Our best
+Euclidean configuration (highest top-1 over the sweep) reaches
+$65.9$\,\% top-1, beating logistic regression by only $1.8$\,pp; on
+balanced accuracy it underperforms logistic ($55.4$\,\% vs.\
+$61.1$\,\%). Best-top-1 Euclidean's sibling recall@5 is $0.136$ ---
+\emph{below} the $k$-NN baseline of $0.160$. The hyperbolic
+configuration that maximises top-1 reaches $60.6$\,\% top-1
+(below both the linear head and the kNN baseline) but achieves
+sibling recall $0.188$ --- $2.8$\,pp \emph{above} kNN. At $d{=}8$
+specifically, where the local-vs-global comparison through the rest
+of the paper sits, hyperbolic sibling recall@5 reaches $0.195$ on the
+default tree and $0.416$ on the empirical tree, against the kNN
+baseline's $0.160 / 0.366$.
+Figure~\ref{fig:pareto} plots the full top-1-vs-sibling-recall
+scatter: the Euclidean cluster sits in the lower-right where $k$-NN
+already lives; only the hyperbolic configurations populate the upper
+portion of the plot. On this dataset and with this encoder, the
+trained Euclidean prototype classifier provides no detectable
+improvement over a linear head and trades classification accuracy
+for sibling recall \emph{below} the kNN baseline. The trained
+hyperbolic prototype classifier improves on the encoder only on
+local hierarchy, but it is the only model in our experiments that
+does so.
 
 \subsection{Robustness to class-imbalance handling}
 
