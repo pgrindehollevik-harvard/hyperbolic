@@ -225,17 +225,40 @@ larger $c$. Pure scaling does not close the global-metric gap.
 % phases, with seed standard deviations.
 
 \subsection{Qualitative analysis}
-% TODO: Poincare-disk plot at d=2 (prototypes + sample embeddings),
-% nearest-neighbor grid, confusion matrix block-ordered by tree.
 
-\TODO{Peter+Valerie}{Three figures + brief narrative:
-(i) Poincar\'e-disk projection of the d=2 prototypes for both geometries,
-showing whether hyperbolic prototypes spread toward the boundary as expected
-from theory; (ii) a small grid of nearest-neighbor matches for two query
-images, side by side for both models, to give the reader a concrete sense of
-the local-retrieval gap; (iii) confusion matrix block-ordered by the default
-tree, so off-diagonal mass is interpretable as ``how far off in the tree is
-the typical mistake''.}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/poincare_disk_d2.pdf}
+  \caption{Prototype layouts at $d=2$ (best curvature per geometry). Each
+  large dot is a learned style prototype; small dots are a 600-image sample
+  of validation embeddings. The dashed circle on the right marks the
+  Poincar\'e ball boundary at radius $1/\sqrt{c}$. Hyperbolic prototypes
+  concentrate near the boundary --- the exponential-volume regime --- while
+  Euclidean prototypes scatter without structural pressure. This is the
+  classical theoretical prediction \citep{nickel2017poincare}, made visible
+  here on a real dataset.}
+  \label{fig:disk}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/confusion_block_d8.pdf}
+  \caption{Row-normalized confusion matrices at $d=8$, rows and columns
+  permuted by a depth-first traversal of the default style tree. Both
+  models concentrate mistakes in near-diagonal blocks, meaning errors
+  predominantly fall on hierarchically adjacent styles (e.g.\
+  Northern\_Renaissance vs.\ Early\_Renaissance, or Action\_painting vs.\
+  Abstract\_Expressionism). The hyperbolic block structure is visibly
+  ``softer'' near the diagonal --- consistent with its higher sibling and
+  cousin recall.}
+  \label{fig:confusion}
+\end{figure}
+
+\TODO{Peter+Valerie}{One more qualitative aid before the headline table:
+a small kNN image grid for matched queries, side-by-side for both
+geometries (\texttt{plot\_knn\_image\_grid} in
+\texttt{scripts/analysis.py}). Pick one query per major branch
+(Renaissance, 19C, Modern) and show 4 nearest neighbors per geometry.}
 
 % =================================================================
 \section{Conclusions and Discussion} % \approx 250 words.

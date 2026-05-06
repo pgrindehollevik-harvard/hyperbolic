@@ -388,7 +388,11 @@ def plot_knn_image_grid(
     split_df = load_split_metadata(split)
 
     if wikiart_dir is None:
-        wikiart_dir = REPO_ROOT / "data" / "wikiart"
+        # The download produces data/wikiart/wikiart/<style>/... — the outer
+        # directory comes from the zip name, the inner one from the dataset.
+        candidates = [REPO_ROOT / "data" / "wikiart" / "wikiart",
+                      REPO_ROOT / "data" / "wikiart"]
+        wikiart_dir = next((c for c in candidates if c.exists()), candidates[0])
     wikiart_dir = Path(wikiart_dir)
 
     rng = np.random.default_rng(seed)
