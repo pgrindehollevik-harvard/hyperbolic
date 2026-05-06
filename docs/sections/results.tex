@@ -183,8 +183,7 @@ running agglomerative clustering with average linkage in Euclidean
 space, and converting the resulting binary dendrogram to an integer
 edge-count distance matrix. The result is an unsupervised reference
 that records what the encoder actually treats as similar, with no
-art-historian in the loop. Implementation lives in
-\texttt{scripts/empirical\_tree.py}.
+art-historian in the loop.
 
 The two reference trees correlate weakly. Spearman correlation
 between hand-built and empirical pairwise distances is $0.08$, and
@@ -213,6 +212,30 @@ hyperbolic prototypes either tie or modestly beat Euclidean ones at
 the global level. The local-vs-global trade-off becomes a
 local-and-global advantage --- modest, but consistent --- once the
 reference is data-driven.
+
+\subsection{Robustness to class-imbalance handling}
+
+WikiArt's class distribution is heavily skewed (Impressionism has
+$133\times$ more training examples than Action\_painting). All four
+phases above used unweighted cross-entropy, so a fair concern is that
+the geometry comparison is itself an artifact of the loss being
+dominated by the largest classes. We rerun the $d{=}8$ winner of
+each geometry (Euclidean, and hyperbolic at $c{=}0.3$) with
+inverse-frequency class-weighted cross-entropy, three seeds.
+Class-weighted training shifts the absolute numbers as expected ---
+top-1 drops by roughly 6 percentage points for both geometries (Eu
+$64.3 \to 58.3$\,\%; Hy $59.8 \to 53.4$\,\%) while balanced accuracy
+rises sharply (Eu $56.4 \to 65.6$\,\%; Hy $44.5 \to 62.1$\,\%) ---
+but the geometry gap is preserved on every axis we report. Top-1
+remains 5\,pp in Euclidean's favour, sibling recall@5 remains 4\,pp
+in hyperbolic's, and class-center / tree-Spearman against the default
+tree shifts by less than a hundredth. The balanced-accuracy gap
+narrows from 11.9 to 3.5 percentage points, suggesting that
+hyperbolic's main classification weakness in our default setup was
+disproportionately on rare classes, but it remains in Euclidean's
+favour. The local advantage of hyperbolic and the classification
+advantage of Euclidean are both robust to the choice of weighting in
+the cross-entropy loss.
 
 \subsection{Headline comparison}
 \begin{table}[t]
