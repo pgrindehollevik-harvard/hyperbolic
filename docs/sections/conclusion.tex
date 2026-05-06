@@ -1,41 +1,54 @@
 \section{Conclusions \& Discussion}
 \label{sec:conclusion}
 
-Hyperbolic geometry improves a specific kind of tree-aware behaviour
---- the local fidelity of an embedding's nearest-neighbor structure
---- but does not improve classification accuracy or global tree
-fidelity. Across our sweep, the geometry choice acts as a parameter
-governing a clear trade-off rather than a hyperparameter to be tuned
-toward a single optimum. The Poincar\'e ball is the appropriate
-choice for downstream tasks dominated by retrieval inside fine-grained
-taxonomies; Euclidean embeddings remain preferable for tasks whose
-primary metric is per-image classification accuracy or coarse global
-hierarchy structure. The two objectives are in measurable tension,
-and the hierarchy-aware regularizer we tested does not resolve it.
+The local advantage of hyperbolic embeddings on this dataset is real
+and survives every robustness check we ran. Sibling and cousin
+recall@5 favour hyperbolic embeddings by 4--5 percentage points at
+every $d \geq 4$, the gap widens as $d$ grows, the hierarchy-aware
+loss does not erase it, and the result is independent of which of
+three alternative reference trees is used. The local-vs-global
+trade-off observed against the hand-built tree, however, is not as
+clean a story as it first appears: when we replaced the hand-built
+reference with a data-driven tree built from CLIP feature centroids,
+the global-Spearman gap inverted in hyperbolic's favour at every
+$d \geq 4$. The apparent global \emph{disadvantage} of hyperbolic
+embeddings was an artifact of imposing a reference taxonomy that the
+encoder's features only weakly support. Classification accuracy
+remains a separate question: there Euclidean leads by 4--6\,pp at
+every configuration we tested, and that gap is reference-tree
+independent.
 
-These results do not establish that hyperbolic embeddings are
-universally preferable for hierarchical image data; on global metrics
-the opposite holds in our sweep. They do not establish that the
-hand-built lineage tree is the correct reference, since tree-Spearman
-and dendrogram F1 are by construction anchored to that specific
-taxonomy. They do not generalize beyond medium-scale,
-Western-canon-heavy WikiArt with a frozen CLIP backbone; a different
-dataset, a fine-tuned encoder, or a substantially larger embedding
-might change the picture.
+What our results do and do not establish is therefore narrower than
+the headline allows. They establish that, for 27-way style
+classification on frozen CLIP features, the Poincar\'e ball preserves
+local hierarchy more faithfully than Euclidean space and aligns
+better with the data's own implicit similarity structure once the
+arbitrariness of the hand-built reference is accounted for. They do
+\emph{not} establish that hyperbolic embeddings are universally
+preferable: Euclidean embeddings keep a robust classification-accuracy
+lead, and a different dataset, encoder, or downstream task could
+shift the balance. They do not establish that the data-driven tree
+is itself ``the right tree'' --- it is one specific construction,
+biased toward CLIP's representation space, and it should not be
+treated as more authoritative than the hand-built lineage tree
+without external corroboration.
 
 Three limitations point to natural extensions. First, only the
 prototypes live on the manifold; the head MLP remains Euclidean, so
-the hyperbolic geometry shapes the decision boundary but not the
-representation itself. A fully hyperbolic head along the lines of
-M\"obius layers \citep{ganea2018hyperbolic} would extend the
-geometry's reach and may shift the trade-off. Second, the regularizer
-is a single fixed loss: scale-invariant MSE on pairwise distances.
-Alternatives that match the rank order of tree distances (a
-Spearman-style surrogate) or that weight nearby pairs more heavily
-(Sammon-style) may achieve comparable tree fidelity at smaller
-classification cost. Third, the reference tree is fixed by hand;
-learning the tree from data along the lines of \citet{chami2020trees}
-would test whether the hand-built hierarchy is itself a bottleneck
-for the global metrics, and in particular whether the local-vs-global
-gap is partly an artifact of imposing a tree that the data does not
-fully support.
+the geometry shapes the decision boundary but not the representation
+itself. A fully hyperbolic head along the lines of M\"obius layers
+\citep{ganea2018hyperbolic} would extend the geometry's reach and
+may shift the trade-off. Second, the regularizer is a single fixed
+loss --- scale-invariant MSE on pairwise distances. Alternatives
+that match the rank order of tree distances (a Spearman-style
+surrogate) or that weight nearby pairs more heavily (Sammon-style)
+may achieve comparable tree fidelity at smaller classification cost.
+Third, our empirical reference tree is constructed in Euclidean
+space from CLIP centroids. Building it from a hyperbolic embedding,
+or from cophenetic distances under non-Euclidean linkages, or by
+direct tree-learning methods \citep{chami2020trees}, would test how
+much of Phase~4's conclusion is robust to the construction choice.
+The most informative next step is probably the second one: a
+comparison across several reasonable empirical trees would make the
+``hyperbolic aligns with the data's structure'' claim load-bearing
+or expose it as a quirk of one specific construction.

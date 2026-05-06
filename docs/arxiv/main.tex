@@ -37,19 +37,25 @@ WikiArt paintings spanning 27 styles, we train two prototype
 classifiers that are identical apart from the geometry of their
 output space ($\mathbb{R}^d$ vs.\ Poincar\'e ball of dimension $d$),
 sweeping embedding dimension, curvature, and the strength $\lambda$
-of a hierarchy-aware regularizer. Across 150 seed-replicated runs the
-geometry advantage \emph{is} real but \emph{local}: hyperbolic
-embeddings recover sibling and cousin neighborhoods 4--5 percentage
-points more faithfully (recall@5), and the gap widens with embedding
-dimension. Euclidean embeddings remain stronger on classification
-accuracy and on global tree-Spearman at every scale tested. The
-hierarchy-aware regularizer improves global tree metrics for both
-geometries but never lets hyperbolic surpass Euclidean on
-classification, and never erases hyperbolic's local advantage. The
-result is robust across three alternative ground-truth trees. We
-recommend treating geometry choice as a known trade-off between local
-neighborhood fidelity and global classification accuracy rather than
-as a hyperparameter to tune for a single optimum.
+of a hierarchy-aware regularizer. Across 150 seed-replicated runs the local advantage of hyperbolic
+embeddings is real, robust, and growing with embedding dimension:
+hyperbolic prototype embeddings recover sibling and cousin
+neighborhoods 4--5 percentage points more faithfully (recall@5) than
+matched Euclidean embeddings, the gap widens with $d$, the
+hierarchy-aware loss does not erase it, and it is independent of
+which of three reference trees we use. The picture for global tree
+fidelity is more delicate. Against the hand-built reference tree,
+Euclidean prototypes correlate slightly better than hyperbolic ones
+with tree distances; but the hand-built tree correlates only weakly
+($\rho = 0.08$) with a data-driven empirical tree built from
+training-set CLIP centroids, and against that empirical tree the
+global advantage flips: hyperbolic prototypes align more closely at
+every $d \geq 4$. The cross-entropy classification gap remains in
+Euclidean's favour. We recommend treating geometry choice as a
+clear local advantage for hyperbolic embeddings plus a clear
+classification-accuracy advantage for Euclidean embeddings, while
+remaining cautious about global-tree-fidelity claims that depend on
+a specific hand-built reference.
 \end{abstract}
 
 \medskip
