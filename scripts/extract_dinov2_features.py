@@ -52,18 +52,22 @@ def main() -> None:
     device = ("cuda" if torch.cuda.is_available()
               else "mps" if torch.backends.mps.is_available()
               else "cpu")
-    print(f"Device: {device}")
+    print(f"Device: {device}", flush=True)
 
     paths = sorted(IMG_DIR.glob("*/*.jpg"))
-    print(f"Images: {len(paths)}")
+    print(f"Images: {len(paths)}", flush=True)
 
-    model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14")
+    model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14", verbose=False)
     model = model.to(device).eval()
+    print("Model loaded", flush=True)
 
+    # num_workers=0 avoids macOS multiprocessing fork issues that hang
+    # silently with no traceback. Sequential preprocessing is the
+    # bottleneck but only adds a few minutes for ~81k images.
     loader = DataLoader(
         WikiArtDataset(paths),
         batch_size=64,
-        num_workers=4,
+        num_workers=0,
         shuffle=False,
         pin_memory=False,
     )

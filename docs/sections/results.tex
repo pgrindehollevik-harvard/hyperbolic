@@ -130,11 +130,15 @@ in both, with Euclidean dropping to 46.9\,\% top-1 and hyperbolic to
 37.4\,\%. The regularizer succeeds at the metric it was constructed
 to optimize, at a substantial classification cost.
 
-The structural finding of Phase~2 is that the geometry winner does
-not flip at any $\lambda$ tested. Euclidean retains the top-1 lead
-and hyperbolic retains the sibling-recall lead across the entire
-sweep. The local-vs-global trade-off observed in Phase~1 is not an
-artifact of the cross-entropy objective.
+The structural finding of Phase~2 is that the relative ordering of
+the two geometries is preserved across the regularizer sweep:
+Euclidean retains the top-1 lead and hyperbolic retains the
+sibling-recall lead at every $\lambda$. (We say ``relative ordering''
+rather than ``global winner'' because the apparent Euclidean lead on
+global tree-Spearman against the default tree is not significant
+across the sweep, and reverses sign against the empirical reference
+tree --- see Section~\ref{ssec:phase4}.) The local advantage of
+hyperbolic is not an artifact of the cross-entropy objective.
 
 \subsection{Phase 3 --- Tree-variant ablation}
 \begin{figure}[t]
@@ -167,11 +171,14 @@ tree provides essentially no useful hierarchical signal: tree-Spearman
 against the default tree drops to $\approx 0.14$ for both
 alternatives, and top-1 climbs back to the $\lambda{=}0$ baseline
 because the regularizer no longer competes with the classification
-objective. The geometry winner, however, is preserved across all
-three training trees: Euclidean leads top-1 by approximately the same
-margin as in Phases~1 and~2, and hyperbolic leads sibling recall by
-approximately the same margin. The qualitative result does not
-depend on the specific reference hierarchy.
+objective. The relative ordering of the two geometries is preserved
+across all three training trees: Euclidean leads top-1 by approximately
+the same margin as in Phases~1 and~2, and hyperbolic leads sibling
+recall by approximately the same margin. Phase~3 shows that varying
+the \emph{training} tree does not affect the comparison; Phase~4 below
+shows that varying the \emph{evaluation} tree can flip the
+global-Spearman direction without affecting the local-recall
+direction.
 
 \subsection{Phase 4 --- Empirical reference tree}
 \label{ssec:phase4}
