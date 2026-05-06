@@ -13,3 +13,4 @@ open_clip_torch
 geoopt
 streamlit
 altair
+st-clickable-images

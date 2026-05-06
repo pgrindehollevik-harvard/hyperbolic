@@ -8,9 +8,9 @@ user clicks.
 ## What it does
 
 Two columns side-by-side. Each starts from the same random batch of 16
-WikiArt validation images. You like the ones you want in each column
-**independently** (the columns can diverge — that's the point). Click
-**Refine** under a column and the demo:
+WikiArt validation images. **Click images** to like / un-like them
+(liked tiles get a red ring) — independently in each column, since the
+columns will diverge. Click **Refine** under a column and the demo:
 
 1. Computes the **Fréchet mean** of the liked images' embeddings, in
    the geometry of that column. (Riemannian iterative algorithm for
@@ -19,8 +19,32 @@ WikiArt validation images. You like the ones you want in each column
    column's native geometry.
 3. Replaces the grid with that batch.
 
-Repeat. Underneath, a panel shows how far each centroid moved between
-rounds — the centroid-drift trajectory.
+Repeat. The two columns drift apart over rounds — that's the artifact.
+
+## Live metrics per column
+
+Above each grid:
+
+- **round** — refine count.
+- **liked** — size of the current liked set.
+- **centroid Δ** — distance moved by the centroid since the previous
+  refine (geometry-native units; not directly comparable across
+  columns, but the trajectory shape *within* each column is).
+- **batch entropy** — Shannon entropy (normalized) of style labels in
+  the displayed batch. Low entropy = the geometry is converging on one
+  style; high entropy = it's still showing diverse cousins.
+
+Below each grid:
+
+- **centroid → nearest 3 prototypes**: which 27-class style prototypes
+  is the centroid closest to, with the distance. Tells you what each
+  geometry "thinks" you want.
+- **dist to disk boundary** (hyperbolic only): how close the centroid
+  is to the Poincaré radius $1/\sqrt{c}$. Centroids that drift to the
+  boundary lose interpretability — Poincaré distance diverges there.
+
+At the bottom: a centroid-drift trajectory chart showing distance
+moved per round per geometry.
 
 ## Why this is interesting
 
@@ -49,7 +73,7 @@ From the repo root, with the venv that already has the rest of the
 project's dependencies:
 
 ```bash
-pip install streamlit altair  # if not already in requirements
+pip install streamlit altair st-clickable-images  # if not already in requirements
 streamlit run apps/style_browser/app.py
 ```
 
