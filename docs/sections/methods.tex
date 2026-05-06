@@ -31,14 +31,14 @@ distances. Adam optimizes the MLP head; Riemannian Adam from
 prototypes, projecting each update back onto the manifold so they stay
 inside the ball.
 
-\paragraph{Hierarchy-aware loss.} The MS3 baseline used the
+\paragraph{Hierarchy-aware loss.} \msthreeposs{} approach used the
 hand-built tree only at evaluation time and trained with plain
 cross-entropy. That is the standard approach in the hyperbolic-image
 literature \citep{khrulkov2020hyperbolic}, but it leaves an opening:
 classification alone does not require prototypes to be arranged in a
 way that mirrors the tree, so we cannot blame the geometry for failing
-on tree metrics if the loss never asked for that arrangement. For MS4
-we add a single-term regularizer that pushes the prototype-prototype
+on tree metrics if the loss never asked for that arrangement. \msfour{}
+adds a single-term regularizer that pushes the prototype-prototype
 distance matrix toward the tree distance matrix:
 \[
   \mathcal{L} = \mathcal{L}_{CE} + \lambda \cdot \frac{1}{|\mathcal{P}|}
@@ -50,7 +50,7 @@ The mean-normalization is the design choice that matters: each pair
 vector is divided by its own mean before the squared difference, so the
 loss only constrains the \emph{shape} of the prototype distance matrix
 rather than its absolute scale. The geometry is free to pick the scale
-that classification likes. $\lambda = 0$ recovers MS3 exactly. The
+that classification likes. $\lambda = 0$ recovers \msthree{} exactly. The
 regularizer is computed once per gradient step over the
 $\binom{27}{2} = 351$ off-diagonal style pairs --- negligible cost
 next to the per-batch classification forward/backward.
