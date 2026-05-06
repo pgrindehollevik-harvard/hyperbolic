@@ -1,0 +1,78 @@
+% arXiv preprint version of the report. Shares all section files with
+% docs/main.tex via the \ifarxiv switch declared in docs/preamble.tex.
+% Differences from the course version: cleaner title block, no Canvas
+% project number, repo URL on the title page, and "MS3"/"MS4" rendered
+% as "the cross-entropy baseline" / "this work" via the macros.
+
+\documentclass[11pt]{article}
+\newif\ifarxiv
+\arxivtrue
+\input{../preamble}
+
+\title{\textbf{Hyperbolic Embeddings for Hierarchical Style
+  Representation:\\ A Local-vs-Global Trade-off}}
+
+\author{%
+  Peter Flo \and Luca Grossmann \and Valerie Wang \\
+  Harvard University\\
+  \texttt{\{pgrindehollevik,lgrossmann,vwang\}@g.harvard.edu}\\[0.6em]
+  \href{https://github.com/pgrindehollevik-harvard/hyperbolic}{%
+    \nolinkurl{github.com/pgrindehollevik-harvard/hyperbolic}}
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Hyperbolic geometry is theoretically better suited than Euclidean
+geometry to representing tree-like data: the volume of a ball at
+radius $r$ grows exponentially in the Poincar\'e model and only
+polynomially in $\mathbb{R}^d$, matching the way a tree's leaf count
+grows with depth. We test whether this mathematical advantage
+translates into a practical one for representing the hierarchy of
+artistic styles. Using frozen CLIP ViT-B/16 features over 81{,}446
+WikiArt paintings spanning 27 styles, we train two prototype
+classifiers that are identical apart from the geometry of their
+output space ($\mathbb{R}^d$ vs.\ Poincar\'e ball of dimension $d$),
+sweeping embedding dimension, curvature, and the strength $\lambda$
+of a hierarchy-aware regularizer. Across 150 seed-replicated runs the
+geometry advantage \emph{is} real but \emph{local}: hyperbolic
+embeddings recover sibling and cousin neighborhoods 4--5 percentage
+points more faithfully (recall@5), and the gap widens with embedding
+dimension. Euclidean embeddings remain stronger on classification
+accuracy and on global tree-Spearman at every scale tested. The
+hierarchy-aware regularizer improves global tree metrics for both
+geometries but never lets hyperbolic surpass Euclidean on
+classification, and never erases hyperbolic's local advantage. The
+result is robust across three alternative ground-truth trees. We
+recommend treating geometry choice as a known trade-off between local
+neighborhood fidelity and global classification accuracy rather than
+as a hyperparameter to tune for a single optimum.
+\end{abstract}
+
+\medskip
+
+\noindent\textbf{Code, sweep CSVs, and figures:}
+\href{https://github.com/pgrindehollevik-harvard/hyperbolic}%
+{\nolinkurl{github.com/pgrindehollevik-harvard/hyperbolic}}.
+
+\tableofcontents
+\newpage
+
+\input{../sections/background}
+\input{../sections/problem}
+\input{../sections/data_eda}
+\input{../sections/methods}
+\input{../sections/results}
+\input{../sections/conclusion}
+\input{../sections/broader_impact}
+\input{../sections/acknowledgements}
+
+\bibliographystyle{plainnat}
+\bibliography{../references}
+
+\input{../sections/appendix}
+
+\end{document}

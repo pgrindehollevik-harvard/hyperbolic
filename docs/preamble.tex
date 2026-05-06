@@ -2,6 +2,9 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
+% Look for figures both in the current directory's figures/ (course
+% version) and in ../figures/ (arxiv version, which lives in arxiv/).
+\graphicspath{{figures/}{../figures/}}
 \usepackage{booktabs}
 \usepackage{caption}
 \usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
@@ -11,3 +14,11 @@
 
 % Inline TODO/owner markers — visible in draft, easy to grep before submission.
 \newcommand{\TODO}[2]{\textcolor{red!70!black}{\textbf{[TODO #1]} #2}}
+
+% Course-vs-arxiv version switch. Course main.tex declares the boolean
+% as false; arxiv main.tex declares it true. Both then \input this
+% preamble. The macros let the same section files cite the prior
+% milestone correctly in both forms.
+\newcommand{\msthree}{\ifarxiv the cross-entropy baseline\else MS3\fi}
+\newcommand{\msfour}{\ifarxiv this work\else MS4\fi}
+\newcommand{\msthreeposs}{\ifarxiv the cross-entropy baseline's\else MS3's\fi}

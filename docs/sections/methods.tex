@@ -22,24 +22,26 @@ with curvature $c > 0$ is
     1 + \frac{2c\,\|x-y\|^2}{(1-c\|x\|^2)(1-c\|y\|^2)}
   \right),
 \]
-which blows up as either point approaches the boundary at radius
-$1/\sqrt{c}$. A standard linear layer does not preserve the ball, so we
-cannot use a parametric softmax head on top of a hyperbolic embedding.
-The prototype classifier is the natural workaround: logits are
-distances. Adam optimizes the MLP head; Riemannian Adam from
-\texttt{geoopt} \citep{kochurov2020geoopt} optimizes the hyperbolic
-prototypes, projecting each update back onto the manifold so they stay
-inside the ball.
+which diverges as either point approaches the boundary at radius
+$1/\sqrt{c}$. A standard linear layer does not preserve the ball,
+which rules out a parametric softmax head on top of a hyperbolic
+embedding. The prototype classifier is the natural alternative: its
+logits are distances, which the geometry already provides. Adam
+optimizes the MLP head; Riemannian Adam from \texttt{geoopt}
+\citep{kochurov2020geoopt} optimizes the hyperbolic prototypes,
+projecting each update back onto the manifold to keep them inside the
+ball.
 
-\paragraph{Hierarchy-aware loss.} The MS3 baseline used the
+\paragraph{Hierarchy-aware loss.} \msthreeposs{} approach used the
 hand-built tree only at evaluation time and trained with plain
-cross-entropy. That is the standard approach in the hyperbolic-image
-literature \citep{khrulkov2020hyperbolic}, but it leaves an opening:
-classification alone does not require prototypes to be arranged in a
-way that mirrors the tree, so we cannot blame the geometry for failing
-on tree metrics if the loss never asked for that arrangement. For MS4
-we add a single-term regularizer that pushes the prototype-prototype
-distance matrix toward the tree distance matrix:
+cross-entropy --- the standard setup in the hyperbolic-image literature
+\citep{khrulkov2020hyperbolic}. Cross-entropy on prototypes requires
+class separability but does not require the prototype layout to match
+the tree, so any failure of either geometry on tree-derived metrics is
+underdetermined: it could be the geometry, or it could be that the
+loss never asked. \msfour{} adds a regularizer that closes this
+ambiguity by pushing the prototype distance matrix directly toward
+the tree distance matrix:
 \[
   \mathcal{L} = \mathcal{L}_{CE} + \lambda \cdot \frac{1}{|\mathcal{P}|}
     \sum_{(i,j) \in \mathcal{P}} \!\left(
@@ -50,7 +52,7 @@ The mean-normalization is the design choice that matters: each pair
 vector is divided by its own mean before the squared difference, so the
 loss only constrains the \emph{shape} of the prototype distance matrix
 rather than its absolute scale. The geometry is free to pick the scale
-that classification likes. $\lambda = 0$ recovers MS3 exactly. The
+that classification likes. $\lambda = 0$ recovers \msthree{} exactly. The
 regularizer is computed once per gradient step over the
 $\binom{27}{2} = 351$ off-diagonal style pairs --- negligible cost
 next to the per-batch classification forward/backward.
@@ -78,17 +80,18 @@ on a single Apple M-series GPU. Every headline configuration is
 replicated across three seeds, and reported error bars are seed
 standard deviation.
 
-\paragraph{Evaluation suite.} A model can earn its keep here in three
-genuinely different ways, so we report metrics covering each:
-\emph{classification} (top-1, top-5, balanced accuracy);
-\emph{global tree fidelity} (Spearman correlation between the learned
-prototype distance matrix and the tree distance matrix, plus
-mean/worst-case multiplicative distortion); and
-\emph{local hierarchy preservation} (sibling and cousin recall@$k$
-among the $k$ nearest neighbors of each validation embedding, for
-$k \in \{5, 10\}$). We also include a hierarchical-clustering check
-(dendrogram-cluster F1 against the default tree) and a Fr\'echet-mean
-nearest-prototype probe on Cubism that tests whether averaged
-embeddings still behave like Cubism. The implementation lives in
+\paragraph{Evaluation suite.} A successful style embedding can be
+useful along three distinct axes, and we report metrics for each.
+\emph{Classification} is measured by top-1, top-5, and balanced
+accuracy. \emph{Global tree fidelity} is measured by the Spearman
+correlation between the learned prototype distance matrix and the
+tree distance matrix, together with mean and worst-case
+multiplicative distortion. \emph{Local hierarchy preservation} is
+measured by sibling and cousin recall@$k$ among the $k$ nearest
+neighbors of each validation embedding, for $k \in \{5, 10\}$. We
+also include a hierarchical-clustering check (dendrogram-cluster F1
+against the default tree) and a Fr\'echet-mean probe on Cubism that
+tests whether the average of several Cubist embeddings remains
+nearest to the Cubist prototype. Implementation lives in
 \texttt{scripts/eval.py}; the sweep runner that drives it lives in
 \texttt{scripts/sweep.py}.
