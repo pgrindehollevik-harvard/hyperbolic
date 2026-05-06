@@ -21,7 +21,9 @@
 \usepackage[colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black]{hyperref}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage{authblk}
-\usepackage{lipsum} % remove before submission
+
+% Inline TODO/owner markers — visible in draft, easy to grep before submission.
+\newcommand{\TODO}[2]{\textcolor{red!70!black}{\textbf{[TODO #1]} #2}}
 
 \title{Hyperbolic Embeddings for Hierarchical Style Representation: \\
   An Empirical Study on WikiArt}
@@ -56,12 +58,15 @@ Code, sweep CSVs, and figures are available at the project repository.
 % =================================================================
 \section{Background and Motivation} % \approx 300 words. Owner: Luca.
 % =================================================================
-% Why hierarchical structure in style? Why hyperbolic? Connect to broader
-% representation-learning questions; mention CLIP frozen features as a
-% practical foundation; flag the existing hyperbolic-embeddings literature
-% (Nickel \& Kiela 2017, Ganea et al. 2018, Khrulkov et al. 2020).
-
-\lipsum[1]
+\TODO{Luca}{Three short paragraphs covering: (i) why artistic style is
+hierarchical and who cares about modeling that structure (digital humanities,
+museum-catalog retrieval, educational tools); (ii) why Euclidean embeddings
+have a known mismatch with tree-like data (polynomial vs.\ exponential
+ball-volume growth) and what hyperbolic geometry offers
+\citep{nickel2017poincare,ganea2018hyperbolic}; (iii) what is and isn't
+already established for image embeddings \citep{khrulkov2020hyperbolic} and
+what gap our study addresses (style-specific, hand-built tree, ablation
+against tree variants).}
 
 % =================================================================
 \section{Problem Statement} % \approx 100 words. Owner: shared.
@@ -85,7 +90,18 @@ sibling and cousin level.
 % - Hierarchy non-uniqueness (drives the tree-variant ablation in Sec. 6.3).
 % - Image preprocessing pipeline summary (CLIP-style normalization, 224px).
 
-\lipsum[2]
+\TODO{Valerie}{One paragraph each on:
+\textit{(a)} Dataset summary --- WikiArt Refined \citep{tan2019artgan},
+$\sim$81k paintings, 27 styles, 70/30 train/val supplied, scale of class
+imbalance with one or two specific examples (Impressionism dominates;
+Action\_painting and Synthetic\_Cubism each $<$1k). Cite our MS2 EDA but
+do not repeat its tables.
+\textit{(b)} Why the imbalance pushes us toward balanced-accuracy reporting
+and a prototype classifier rather than a class-frequency-tied softmax.
+\textit{(c)} Why the choice of ground-truth tree is non-unique --- WikiArt
+ships no hierarchy, art-history offers several, and we therefore evaluate
+sensitivity (Section~\ref{sec:results}). Include 1 small figure: distance
+matrices of the three trees side-by-side, lifted from the notebook.}
 
 % =================================================================
 \section{Methods} % \approx 600 words. Owner: Peter.
@@ -153,6 +169,11 @@ Implementation details are in \texttt{scripts/eval.py}.
 \section{Results and Interpretation}\label{sec:results} % \approx 700 words. Owner: Peter / Valerie.
 % =================================================================
 
+\TODO{Peter}{Open the section with one paragraph stating the headline
+finding so the reader doesn't have to triangulate it from four sub-results.
+Then walk through Phases 1--3 in order, each with one figure and 4--6
+sentences of interpretation.}
+
 \subsection{Phase 1 — Scaling sweep}
 % TODO: insert figure: Phase 1 scaling plot (top-1, tree spearman, sibling@5
 % vs d, by geometry; hyperbolic uses best curvature per d).
@@ -189,22 +210,57 @@ Implementation details are in \texttt{scripts/eval.py}.
 % TODO: Poincare-disk plot at d=2 (prototypes + sample embeddings),
 % nearest-neighbor grid, confusion matrix block-ordered by tree.
 
-\lipsum[3]
+\TODO{Peter+Valerie}{Three figures + brief narrative:
+(i) Poincar\'e-disk projection of the d=2 prototypes for both geometries,
+showing whether hyperbolic prototypes spread toward the boundary as expected
+from theory; (ii) a small grid of nearest-neighbor matches for two query
+images, side by side for both models, to give the reader a concrete sense of
+the local-retrieval gap; (iii) confusion matrix block-ordered by the default
+tree, so off-diagonal mass is interpretable as ``how far off in the tree is
+the typical mistake''.}
 
 % =================================================================
 \section{Conclusions and Discussion} % \approx 250 words.
 % =================================================================
-% What we can claim, what we can't, what we'd test next.
 
-\lipsum[4]
+\TODO{All}{Final-pass paragraph (after results settle) covering:
+(a) the headline finding stated as a falsifiable claim with seed-level
+uncertainty (e.g.\ ``hyperbolic matches Euclidean on top-1 within $\pm$1\%
+once $\lambda \geq 1$ but does not exceed it''); (b) what we can not claim
+--- in particular, that any improvement is unlikely to come from
+classification accuracy and we should not oversell global metric gains;
+(c) limitations: single dataset, single CLIP backbone, hand-built tree,
+single hierarchy-aware loss formulation; (d) future work: per-prototype
+curvature, hyperbolic versions of the head MLP not just the prototypes
+\citep{ganea2018hyperbolic}, learned trees \citep{chami2020trees}, and
+extension to non-Western traditions where the WikiArt taxonomy is
+underrepresented.}
 
 % =================================================================
-\section{Broader Impact} % \approx 100 words.
+\section{Broader Impact} % \approx 120 words.
 % =================================================================
-% Cultural-heritage applications, risks of imposing a specific art-historical
-% tree, dataset biases (Western-canon-heavy), de-skilling concerns.
 
-\lipsum[5]
+The system we study is small (a 27-way style classifier on cached features),
+but the design choices have broader implications. Three points worth
+flagging.
+
+First, our default ground-truth tree is built from a Western, lineage-based
+art-history canon. Distance metrics computed against it implicitly endorse
+that taxonomy. The Phase~3 ablation against alternative trees is partial
+mitigation; deployment in a museum or educational context should make the
+choice of tree explicit and revisable.
+
+Second, the WikiArt corpus is biased toward European painting and sparsely
+represents non-Western traditions (e.g., Ukiyo-e is the only non-Western
+top-level category). A retrieval system trained on this data will under-rank
+non-Western works for ambiguous queries. Users of any downstream system
+should be informed of this bias.
+
+Third, hyperbolic representations of style structure could in principle be
+used to attribute or authenticate paintings. We do not endorse such use
+without human-expert review: the classification accuracies reported here
+($\sim$50--60\% top-1 over 27 styles) are far below the threshold required
+for legal or commercial decisions.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
