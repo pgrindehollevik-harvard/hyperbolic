@@ -1,28 +1,31 @@
 \section{Broader Impact}
 \label{sec:impact}
 
-The system we study is small (a 27-way style classifier on cached
-features), but the design choices have broader implications. Three
-points worth flagging.
+The system itself is small --- a 27-way classifier on cached features
+--- but a few of its design choices have implications worth being
+explicit about.
 
-First, our default ground-truth tree is built from a Western,
-lineage-based art-history canon. Distance metrics computed against it
-implicitly endorse that taxonomy. The Phase~3 ablation against
-alternative trees is partial mitigation; deployment in a museum or
-educational context should make the choice of tree explicit and
-revisable rather than hard-coded.
+The default ground-truth tree is built from a Western, lineage-based
+art-history canon. Every metric in this paper that mentions ``the
+hierarchy'' is anchored to that taxonomy, which is implicitly endorsed
+by anyone using these numbers. Phase~3 is partial mitigation: it
+documents how much the conclusion depends on the choice of tree. A
+deployment in a museum or classroom context should treat the tree as
+configuration, not as a constant in the source code.
 
-Second, the WikiArt corpus is biased toward European painting and
-sparsely represents non-Western traditions (Ukiyo-e is the only
-non-Western top-level category). A retrieval system trained on this
-data will under-rank non-Western works for ambiguous queries, and
-hyperbolic geometry --- which we show preserves local hierarchy more
-faithfully --- could amplify that effect by tightening neighborhoods
-inside the dominant taxonomy. Users of any downstream system should
-be informed of this bias.
+WikiArt is itself heavily biased toward European painting; the dataset
+contains 27 styles but only one (Ukiyo-e) sits outside the
+European-and-American canon, and East Asian ink-painting traditions
+that span centuries are collapsed into that single label. A retrieval
+system trained on this data will under-rank non-Western works for
+ambiguous queries. Hyperbolic geometry --- which we have shown tightens
+local neighborhoods --- could compound the effect by making those
+already-tight neighborhoods more confident. Anyone deploying
+embeddings of this kind should publish that limitation alongside the
+model, not bury it.
 
-Third, hyperbolic representations of style structure could in principle
-be used to attribute or authenticate paintings. We do not endorse such
-use without human-expert review: the classification accuracies reported
-here ($\sim$50--65\,\% top-1 over 27 styles) are far below the
-threshold required for legal or commercial decisions.
+Finally, hyperbolic representations of style could in principle inform
+attribution or authentication of paintings. We strongly do not
+recommend that use without expert human review: 50--65\,\% top-1
+accuracy over 27 well-known styles is far below the threshold any
+serious provenance, insurance, or legal decision should require.

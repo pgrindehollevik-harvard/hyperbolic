@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "style-browser",
+      "runtimeExecutable": "/Users/peterflo/Desktop/projects/research/hyperbolic/.venv/bin/streamlit",
+      "runtimeArgs": [
+        "run",
+        "apps/style_browser/app.py",
+        "--server.headless",
+        "true",
+        "--server.port",
+        "8501",
+        "--browser.gatherUsageStats",
+        "false"
+      ],
+      "port": 8501
+    }
+  ]
+}
