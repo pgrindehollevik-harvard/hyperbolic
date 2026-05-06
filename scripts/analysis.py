@@ -213,6 +213,149 @@ def headline_table(
     return pd.DataFrame(rows).set_index("geometry")
 
 
+def _embed_split(ckpt_path: Path, split: str = "val", batch_size: int = 4096,
+                 device: str | None = None, max_samples: int | None = None):
+    """Load a checkpoint and return (embeddings, labels, prototypes, metadata)."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import torch
+    from torch.utils.data import DataLoader
+
+    from dataset import FeatureDataset
+    from eval import evaluate, load_model, pick_device
+
+    dev = pick_device(device)
+    _, head, clf, metadata = load_model(
+        ckpt_path=ckpt_path, geometry_override=None, curvature_override=None, device=dev,
+    )
+    dataset = FeatureDataset(split)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    _, y_true, _, _, embeddings = evaluate(head, clf, loader, dev)
+    if max_samples is not None and len(y_true) > max_samples:
+        rng = np.random.default_rng(0)
+        idx = rng.choice(len(y_true), size=max_samples, replace=False)
+        embeddings = embeddings[idx]
+        y_true = y_true[idx]
+    prototypes = clf.prototypes.detach().cpu().numpy()
+    return embeddings, y_true, prototypes, metadata
+
+
+def plot_poincare_disk(ckpt_path: Path, split: str = "val", max_samples: int = 800,
+                       device: str | None = None,
+                       figsize: tuple[float, float] = (8, 8)) -> plt.Figure:
+    """2D scatter of embeddings + prototypes. Requires d=2 checkpoint.
+    Draws the unit circle for hyperbolic; pure scatter for Euclidean.
+    """
+    embeddings, labels, prototypes, meta = _embed_split(
+        ckpt_path, split=split, device=device, max_samples=max_samples,
+    )
+    if embeddings.shape[1] != 2:
+        raise ValueError(f"plot_poincare_disk requires d=2, got d={embeddings.shape[1]}")
+
+    from hierarchy import load_style_classes
+    style_names = load_style_classes()
+    n_classes = len(style_names)
+
+    cmap = plt.get_cmap("tab20", n_classes)
+    fig, ax = plt.subplots(figsize=figsize)
+    if meta["geometry"] == "hyperbolic":
+        c = float(meta["curvature"])
+        radius = 1.0 / (c ** 0.5)
+        circle = plt.Circle((0, 0), radius, fill=False, color="black",
+                            linewidth=1.5, linestyle="--")
+        ax.add_patch(circle)
+
+    for k in range(n_classes):
+        mask = labels == k
+        if mask.any():
+            ax.scatter(embeddings[mask, 0], embeddings[mask, 1],
+                       s=6, alpha=0.35, color=cmap(k), label=None)
+    for k in range(n_classes):
+        ax.scatter(prototypes[k, 0], prototypes[k, 1],
+                   s=110, color=cmap(k), edgecolor="black", linewidth=0.8, zorder=5)
+        ax.annotate(style_names[k][:10], (prototypes[k, 0], prototypes[k, 1]),
+                    fontsize=7, ha="center", va="center", zorder=6)
+
+    ax.set_aspect("equal")
+    ax.set_title(f"{meta['geometry']} d=2"
+                 + (f", c={meta['curvature']}" if meta['geometry'] == 'hyperbolic' else ""))
+    ax.set_xlabel("dim 0")
+    ax.set_ylabel("dim 1")
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    return fig
+
+
+def tree_leaf_order(hierarchy_name: str = "default") -> list[int]:
+    """Return a label-index ordering produced by a depth-first traversal of
+    the tree, so confusion matrices reordered by this list have block
+    structure aligned with the hierarchy."""
+    from hierarchy import get_hierarchy, load_style_classes
+    style_names = load_style_classes()
+    style_to_idx = {s: i for i, s in enumerate(style_names)}
+    hierarchy = get_hierarchy(hierarchy_name)
+    order: list[int] = []
+
+    def dfs(node: str) -> None:
+        if node in style_to_idx:
+            order.append(style_to_idx[node])
+        for child in hierarchy.get(node, []):
+            dfs(child)
+
+    dfs("Root")
+    # Add any styles that weren't reached (shouldn't happen for default; will
+    # for hierarchies that omit some styles).
+    for i in range(len(style_names)):
+        if i not in order:
+            order.append(i)
+    return order
+
+
+def plot_confusion_block_tree(
+    ckpt_path: Path, split: str = "val", device: str | None = None,
+    hierarchy_name: str = "default", figsize: tuple[float, float] = (10, 9),
+) -> plt.Figure:
+    """Confusion matrix re-ordered by a tree-DFS leaf order, so on-tree
+    mistakes cluster near the diagonal."""
+    import torch
+    from sklearn.metrics import confusion_matrix
+    from torch.utils.data import DataLoader
+
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+    from dataset import FeatureDataset, NUM_CLASSES
+    from eval import evaluate, load_model, pick_device
+    from hierarchy import load_style_classes
+
+    dev = pick_device(device)
+    _, head, clf, _ = load_model(
+        ckpt_path=ckpt_path, geometry_override=None, curvature_override=None, device=dev,
+    )
+    loader = DataLoader(FeatureDataset(split), batch_size=4096, shuffle=False)
+    _, y_true, y_pred, _, _ = evaluate(head, clf, loader, dev)
+    style_names = load_style_classes()
+    cm = confusion_matrix(y_true, y_pred, labels=np.arange(NUM_CLASSES))
+    cm = cm / cm.sum(axis=1, keepdims=True).clip(min=1)
+
+    order = tree_leaf_order(hierarchy_name)
+    cm_ord = cm[np.ix_(order, order)]
+    labels_ord = [style_names[i] for i in order]
+
+    fig, ax = plt.subplots(figsize=figsize)
+    im = ax.imshow(cm_ord, cmap="magma_r", vmin=0, vmax=1)
+    ax.set_xticks(range(len(labels_ord)))
+    ax.set_yticks(range(len(labels_ord)))
+    ax.set_xticklabels(labels_ord, rotation=90, fontsize=7)
+    ax.set_yticklabels(labels_ord, fontsize=7)
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("True")
+    ax.set_title(f"Row-normalized confusion, tree-ordered ({hierarchy_name})")
+    fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02)
+    fig.tight_layout()
+    return fig
+
+
 def format_headline_for_report(table: pd.DataFrame) -> pd.DataFrame:
     """Convert the headline table to a "Eu vs Hy" mean±std string format."""
     metric_keys = list(HEADLINE_METRICS.keys())
