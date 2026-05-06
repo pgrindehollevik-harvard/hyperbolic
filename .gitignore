@@ -1,9 +1,6 @@
 # Data (directory or symlink)
 data/
 data
-report/figures/*.pdf
-report/figures/*.png
-!report/figures/.gitkeep
 
 # LaTeX build artifacts
 *.aux

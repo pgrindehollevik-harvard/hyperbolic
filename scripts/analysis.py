@@ -202,9 +202,12 @@ def headline_table(
             continue
         agg = sub.groupby(cluster_keys, dropna=False)[metrics].agg(["mean", "std"])
         higher = metric_for_selection in HIGHER_IS_BETTER
-        idx = (agg[(metric_for_selection, "mean")].idxmax()
-               if higher else agg[(metric_for_selection, "mean")].idxmin())
-        best = agg.loc[idx]
+        # Use positional indexing to avoid pandas MultiIndex .loc[] choking on
+        # NaN curvature for euclidean configs.
+        scores = agg[(metric_for_selection, "mean")].to_numpy()
+        pos = int(np.nanargmax(scores)) if higher else int(np.nanargmin(scores))
+        best = agg.iloc[pos]
+        idx = agg.index[pos]
         config = dict(zip(cluster_keys, idx))
         flat = {f"{m}_mean": float(best[(m, "mean")]) for m in metrics}
         flat.update({f"{m}_std": float(best[(m, "std")]) for m in metrics})
