@@ -819,35 +819,54 @@ def frechet_interpolation_metrics(
     return metrics, trial_df
 
 
-def main() -> None:
-    args = parse_args()
-    device = pick_device(args.device)
-    ckpt_path = args.ckpt.resolve()
-    output_dir = (
-        args.output_dir.resolve()
-        if args.output_dir is not None
-        else ckpt_path.parent / f"eval_{args.split}"
-    )
-    output_dir.mkdir(parents=True, exist_ok=True)
+def run_evaluation(
+    ckpt_path,
+    split: str = "val",
+    batch_size: int = 1024,
+    device: str | None = None,
+    output_dir=None,
+    save_artifacts: bool = True,
+    distance_block_size: int = 512,
+    knn_k=(5, 10),
+    frechet_style: str = "Cubism",
+    frechet_sample_size: int = 8,
+    frechet_trials: int = 100,
+    seed: int = 2090,
+    geometry: str | None = None,
+    curvature: float | None = None,
+) -> dict:
+    """Run the full MS3/MS4 evaluation suite on a checkpoint.
+
+    Returns a flat metrics dict suitable for a sweep CSV row. When
+    ``save_artifacts`` is True (default), also dumps CSVs/plots to ``output_dir``.
+    """
+    device_obj = pick_device(device)
+    ckpt_path = Path(ckpt_path).resolve()
+    if output_dir is None and save_artifacts:
+        output_dir = ckpt_path.parent / f"eval_{split}"
+    if output_dir is not None:
+        output_dir = Path(output_dir).resolve()
+        if save_artifacts:
+            output_dir.mkdir(parents=True, exist_ok=True)
 
     _, head, clf, metadata = load_model(
         ckpt_path=ckpt_path,
-        geometry_override=args.geometry,
-        curvature_override=args.curvature,
-        device=device,
+        geometry_override=geometry,
+        curvature_override=curvature,
+        device=device_obj,
     )
 
     raw_split_count = len(
         pd.read_csv(
-            SPLIT_DIR / f"style_{args.split}.csv",
+            SPLIT_DIR / f"style_{split}.csv",
             header=None,
         )
     )
-    split_df = load_split_metadata(args.split)
-    dataset = FeatureDataset(args.split)
-    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
+    split_df = load_split_metadata(split)
+    dataset = FeatureDataset(split)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-    metrics, y_true, y_pred, topk_idx, embeddings = evaluate(head, clf, loader, device)
+    metrics, y_true, y_pred, topk_idx, embeddings = evaluate(head, clf, loader, device_obj)
 
     style_names = load_style_classes()
     tree_dists = distance_matrix(style_names)
@@ -880,13 +899,14 @@ def main() -> None:
         curvature=metadata["curvature"],
     )
 
+    knn_k_list = sorted(set(int(k) for k in knn_k))
     avg_style_dists, neighbor_indices, neighbor_dists = collect_distance_statistics(
         embeddings=embeddings,
         labels=y_true,
         geometry=metadata["geometry"],
         curvature=metadata["curvature"],
-        ks=sorted(set(args.knn_k)),
-        block_size=args.distance_block_size,
+        ks=knn_k_list,
+        block_size=distance_block_size,
     )
 
     tree_vec = pairwise_values(tree_dists)
@@ -902,32 +922,47 @@ def main() -> None:
         labels=y_true,
         neighbor_indices=neighbor_indices,
         style_names=style_names,
-        ks=sorted(set(args.knn_k)),
+        ks=knn_k_list,
     )
     dendro_metrics, dendro_df, dendro_children, dendro_distances = dendrogram_metrics(
         class_center_dists=class_center_dists,
         style_names=style_names,
     )
-    frechet_metrics, frechet_trials_df = frechet_interpolation_metrics(
-        embeddings=embeddings,
-        labels=y_true,
-        prototype_points=prototype_points,
-        style_names=style_names,
-        geometry=metadata["geometry"],
-        curvature=metadata["curvature"],
-        target_style=args.frechet_style,
-        sample_size=args.frechet_sample_size,
-        trials=args.frechet_trials,
-        seed=args.seed,
-    )
+
+    try:
+        frechet_metrics, frechet_trials_df = frechet_interpolation_metrics(
+            embeddings=embeddings,
+            labels=y_true,
+            prototype_points=prototype_points,
+            style_names=style_names,
+            geometry=metadata["geometry"],
+            curvature=metadata["curvature"],
+            target_style=frechet_style,
+            sample_size=frechet_sample_size,
+            trials=frechet_trials,
+            seed=seed,
+        )
+    except ValueError as exc:
+        print(f"[eval] frechet metrics skipped: {exc}")
+        frechet_metrics = {
+            "frechet_style": frechet_style,
+            "frechet_sample_size": int(frechet_sample_size),
+            "frechet_trials": 0,
+            "frechet_nearest_prototype_accuracy": float("nan"),
+            "frechet_target_prototype_distance_mean": float("nan"),
+            "frechet_target_prototype_distance_std": float("nan"),
+            "frechet_best_other_margin_mean": float("nan"),
+            "frechet_holdout_same_style_distance_mean": float("nan"),
+        }
+        frechet_trials_df = pd.DataFrame()
 
     metrics.update(
         {
             "balanced_accuracy": float(per_class_acc.mean()),
             "num_samples": int(len(y_true)),
-            "split": args.split,
+            "split": split,
             "checkpoint": str(ckpt_path),
-            "device": str(device),
+            "device": str(device_obj),
             "geometry": metadata["geometry"],
             "embedding_dim": metadata["dim"],
             "curvature": metadata["curvature"],
@@ -945,75 +980,106 @@ def main() -> None:
     metrics.update(knn_metrics)
     metrics.update(frechet_metrics)
 
-    metrics_path = output_dir / "metrics.json"
-    with metrics_path.open("w") as f:
-        json.dump(metrics, f, indent=2)
+    if save_artifacts and output_dir is not None:
+        with (output_dir / "metrics.json").open("w") as f:
+            json.dump(metrics, f, indent=2)
 
-    per_class_df = pd.DataFrame(
-        {
-            "label": np.arange(NUM_CLASSES),
-            "style": style_names,
-            "num_examples": per_class_total,
-            "num_correct": per_class_correct,
-            "accuracy": per_class_acc,
-        }
-    )
-    per_class_df.to_csv(output_dir / "per_class_accuracy.csv", index=False)
+        per_class_df = pd.DataFrame(
+            {
+                "label": np.arange(NUM_CLASSES),
+                "style": style_names,
+                "num_examples": per_class_total,
+                "num_correct": per_class_correct,
+                "accuracy": per_class_acc,
+            }
+        )
+        per_class_df.to_csv(output_dir / "per_class_accuracy.csv", index=False)
 
-    pd.DataFrame(conf_mat, index=style_names, columns=style_names).to_csv(
-        output_dir / "confusion_matrix.csv"
-    )
-    save_confusion_plot(conf_mat, style_names, output_dir / "confusion_matrix.png")
+        pd.DataFrame(conf_mat, index=style_names, columns=style_names).to_csv(
+            output_dir / "confusion_matrix.csv"
+        )
+        save_confusion_plot(conf_mat, style_names, output_dir / "confusion_matrix.png")
 
-    pd.DataFrame(prototype_dists, index=style_names, columns=style_names).to_csv(
-        output_dir / "prototype_distances.csv"
-    )
-    pd.DataFrame(class_center_dists, index=style_names, columns=style_names).to_csv(
-        output_dir / "class_center_distances.csv"
-    )
-    pd.DataFrame(avg_style_dists, index=style_names, columns=style_names).to_csv(
-        output_dir / "style_pair_mean_distances.csv"
-    )
-    style_pair_df.to_csv(output_dir / "tree_distortion_pairs.csv", index=False)
-    dendro_df.to_csv(output_dir / "dendrogram_clusters.csv", index=False)
-    save_dendrogram_plot(
-        dendro_children,
-        dendro_distances,
-        style_names,
-        output_dir / "dendrogram.png",
-    )
-    frechet_trials_df.to_csv(output_dir / "frechet_interpolation_trials.csv", index=False)
+        pd.DataFrame(prototype_dists, index=style_names, columns=style_names).to_csv(
+            output_dir / "prototype_distances.csv"
+        )
+        pd.DataFrame(class_center_dists, index=style_names, columns=style_names).to_csv(
+            output_dir / "class_center_distances.csv"
+        )
+        pd.DataFrame(avg_style_dists, index=style_names, columns=style_names).to_csv(
+            output_dir / "style_pair_mean_distances.csv"
+        )
+        style_pair_df.to_csv(output_dir / "tree_distortion_pairs.csv", index=False)
+        dendro_df.to_csv(output_dir / "dendrogram_clusters.csv", index=False)
+        save_dendrogram_plot(
+            dendro_children,
+            dendro_distances,
+            style_names,
+            output_dir / "dendrogram.png",
+        )
+        if not frechet_trials_df.empty:
+            frechet_trials_df.to_csv(
+                output_dir / "frechet_interpolation_trials.csv", index=False
+            )
 
-    predictions_df = pd.DataFrame(
-        {
-            "path": split_df["path"],
-            "row_idx": split_df["row_idx"],
-            "true_label": y_true,
-            "true_style": [style_names[i] for i in y_true],
-            "pred_label": y_pred,
-            "pred_style": [style_names[i] for i in y_pred],
-            "correct": y_true == y_pred,
-            "tree_distance_true_pred": tree_dists[y_true, y_pred],
-        }
+        predictions_df = pd.DataFrame(
+            {
+                "path": split_df["path"],
+                "row_idx": split_df["row_idx"],
+                "true_label": y_true,
+                "true_style": [style_names[i] for i in y_true],
+                "pred_label": y_pred,
+                "pred_style": [style_names[i] for i in y_pred],
+                "correct": y_true == y_pred,
+                "tree_distance_true_pred": tree_dists[y_true, y_pred],
+            }
+        )
+        for rank in range(topk_idx.shape[1]):
+            predictions_df[f"top{rank + 1}_label"] = topk_idx[:, rank]
+            predictions_df[f"top{rank + 1}_style"] = [
+                style_names[i] for i in topk_idx[:, rank]
+            ]
+        predictions_df.to_csv(output_dir / "predictions.csv", index=False)
+
+        pd.DataFrame(
+            neighbor_indices,
+            columns=[
+                f"neighbor_{rank + 1}_index"
+                for rank in range(neighbor_indices.shape[1])
+            ],
+        ).to_csv(output_dir / "knn_neighbor_indices.csv", index=False)
+        pd.DataFrame(
+            neighbor_dists,
+            columns=[
+                f"neighbor_{rank + 1}_distance"
+                for rank in range(neighbor_dists.shape[1])
+            ],
+        ).to_csv(output_dir / "knn_neighbor_distances.csv", index=False)
+
+        print(f"saved evaluation artifacts to {output_dir}")
+
+    return metrics
+
+
+def main() -> None:
+    args = parse_args()
+    metrics = run_evaluation(
+        ckpt_path=args.ckpt,
+        split=args.split,
+        batch_size=args.batch_size,
+        device=args.device,
+        output_dir=args.output_dir,
+        save_artifacts=True,
+        distance_block_size=args.distance_block_size,
+        knn_k=args.knn_k,
+        frechet_style=args.frechet_style,
+        frechet_sample_size=args.frechet_sample_size,
+        frechet_trials=args.frechet_trials,
+        seed=args.seed,
+        geometry=args.geometry,
+        curvature=args.curvature,
     )
-    for rank in range(topk_idx.shape[1]):
-        predictions_df[f"top{rank + 1}_label"] = topk_idx[:, rank]
-        predictions_df[f"top{rank + 1}_style"] = [
-            style_names[i] for i in topk_idx[:, rank]
-        ]
-    predictions_df.to_csv(output_dir / "predictions.csv", index=False)
-
-    pd.DataFrame(
-        neighbor_indices,
-        columns=[f"neighbor_{rank + 1}_index" for rank in range(neighbor_indices.shape[1])],
-    ).to_csv(output_dir / "knn_neighbor_indices.csv", index=False)
-    pd.DataFrame(
-        neighbor_dists,
-        columns=[f"neighbor_{rank + 1}_distance" for rank in range(neighbor_dists.shape[1])],
-    ).to_csv(output_dir / "knn_neighbor_distances.csv", index=False)
-
     print(json.dumps(metrics, indent=2))
-    print(f"saved evaluation artifacts to {output_dir}")
 
 
 if __name__ == "__main__":

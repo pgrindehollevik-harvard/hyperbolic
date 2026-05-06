@@ -1,5 +1,16 @@
 """
-WikiArt style hierarchy and tree-distance matrix T.
+WikiArt style hierarchies and tree-distance matrices.
+
+Three hierarchies are provided:
+- "default": the art-history lineage tree used in MS3 (Renaissance → Baroque → ...).
+- "flat": every leaf is a direct child of Root. Acts as a null/control: the
+  tree-distance matrix becomes constant off-diagonal, so no embedding can do
+  better than chance on hierarchy-aware metrics. Useful for confirming our
+  metrics actually depend on the tree.
+- "chronological": a two-level era-based tree (Renaissance / Baroque-Rococo /
+  19th century / Early 20th / Modern / Non-Western). Different pair-distances
+  from "default" — used to test sensitivity of conclusions to the choice of
+  ground-truth tree.
 """
 
 from __future__ import annotations
@@ -25,6 +36,39 @@ STYLE_HIERARCHY: dict[str, list[str]] = {
     "Pop_Art": ["New_Realism"],
 }
 
+
+CHRONOLOGICAL_HIERARCHY: dict[str, list[str]] = {
+    "Root": ["Renaissance_Era", "Baroque_Era", "Long_19th_Century", "Early_20th_Century", "Modern_Postwar", "Non_Western"],
+    "Renaissance_Era": [
+        "Early_Renaissance", "Northern_Renaissance", "High_Renaissance", "Mannerism_Late_Renaissance",
+    ],
+    "Baroque_Era": ["Baroque", "Rococo"],
+    "Long_19th_Century": [
+        "Romanticism", "Realism", "Impressionism", "Post_Impressionism",
+        "Pointillism", "Symbolism", "Art_Nouveau", "Contemporary_Realism",
+    ],
+    "Early_20th_Century": [
+        "Fauvism", "Cubism", "Analytical_Cubism", "Synthetic_Cubism",
+        "Expressionism", "Naive_Art_Primitivism",
+    ],
+    "Modern_Postwar": [
+        "Abstract_Expressionism", "Action_painting", "Color_Field_Painting",
+        "Minimalism", "Pop_Art", "New_Realism",
+    ],
+    "Non_Western": ["Ukiyo_e"],
+}
+
+
+def _flat_hierarchy(styles: list[str]) -> dict[str, list[str]]:
+    return {"Root": list(styles)}
+
+
+HIERARCHIES: dict[str, dict[str, list[str]]] = {
+    "default": STYLE_HIERARCHY,
+    "chronological": CHRONOLOGICAL_HIERARCHY,
+}
+
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 STYLE_CLASSES_PATH = REPO_ROOT / "data" / "wikiart_csvs" / "style_class.txt"
 
@@ -40,15 +84,26 @@ def load_style_classes() -> list[str]:
     return [name for _, name in rows]
 
 
-# Ack: Used the help of Claude Opus to build distance matrix here. 
-def distance_matrix(styles: list[str]) -> np.ndarray:
-    parent = {c: p for p, children in STYLE_HIERARCHY.items() for c in children}
+def get_hierarchy(name: str, styles: list[str] | None = None) -> dict[str, list[str]]:
+    if name == "flat":
+        if styles is None:
+            styles = load_style_classes()
+        return _flat_hierarchy(styles)
+    if name not in HIERARCHIES:
+        raise ValueError(f"Unknown hierarchy '{name}'. Options: default, chronological, flat.")
+    return HIERARCHIES[name]
+
+
+# Ack: Used the help of Claude Opus to build distance matrix here.
+def distance_matrix(styles: list[str], hierarchy_name: str = "default") -> np.ndarray:
+    hierarchy = get_hierarchy(hierarchy_name, styles)
+    parent = {c: p for p, children in hierarchy.items() for c in children}
 
     depth = {"Root": 0}
     stack = ["Root"]
     while stack:
         n = stack.pop()
-        for c in STYLE_HIERARCHY.get(n, []):
+        for c in hierarchy.get(n, []):
             depth[c] = depth[n] + 1
             stack.append(c)
 
@@ -75,5 +130,7 @@ def distance_matrix(styles: list[str]) -> np.ndarray:
 
 if __name__ == "__main__":
     styles = load_style_classes()
-    T = distance_matrix(styles)
-    print(T)
+    for name in ["default", "chronological", "flat"]:
+        T = distance_matrix(styles, hierarchy_name=name)
+        print(f"--- {name} ---")
+        print(f"shape={T.shape} mean={T[T>0].mean():.2f} max={T.max()}")

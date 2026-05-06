@@ -1,5 +1,20 @@
-# Data
+# Data (directory or symlink)
 data/
+data
+report/figures/*.pdf
+report/figures/*.png
+!report/figures/.gitkeep
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
 
 # Python
 __pycache__/

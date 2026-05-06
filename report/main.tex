@@ -1,0 +1,220 @@
+% MS4 Final Report — Hyperbolic Embeddings for Hierarchical Style Representation
+% Target length: 2000-2500 words of body prose. Title page, headings,
+% references, and appendix do NOT count toward the budget. Captions DO.
+%
+% This file uses the standard article class for portability. To swap in the
+% NeurIPS 2026 template later, change \documentclass{article} to
+% \documentclass{neurips_2026} (or the version supplied by the course) and
+% remove the geometry/title block below; the section structure will carry over.
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage[colorlinks=true, linkcolor=blue!50!black, citecolor=blue!50!black, urlcolor=blue!50!black]{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{authblk}
+\usepackage{lipsum} % remove before submission
+
+\title{Hyperbolic Embeddings for Hierarchical Style Representation: \\
+  An Empirical Study on WikiArt}
+
+\author[1]{Peter Flo}
+\author[1]{Luca Grossmann}
+\author[1]{Valerie Wang}
+\affil[1]{Harvard University, COMPSCI 2090B (Spring 2026)}
+\date{\textbf{Canvas Project \#150} \\ \today}
+
+\renewcommand{\abstractname}{Abstract}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+% ~150 words. Final pass after results are settled.
+We investigate whether Poincar\'e-ball embeddings recover the hierarchical
+structure of artistic styles better than matched Euclidean embeddings. Using
+frozen CLIP ViT-B/16 features over 81{,}000 WikiArt paintings spanning 27
+styles, we train geometry-paired prototype classifiers across embedding
+dimensions $d \in \{2,\dots,64\}$, curvatures $c \in \{0.1, 0.3, 1, 3\}$, and
+seeds, both with and without a hierarchy-aware regularizer that pushes the
+prototype distance matrix toward a hand-built art-history tree. We find
+\textbf{[headline result placeholder]}. Tree-variant ablations with
+chronological and flat ground-truth trees confirm that the conclusion is
+\textbf{[robust / fragile]} to the specific choice of reference hierarchy.
+Code, sweep CSVs, and figures are available at the project repository.
+\end{abstract}
+
+% =================================================================
+\section{Background and Motivation} % \approx 300 words. Owner: Luca.
+% =================================================================
+% Why hierarchical structure in style? Why hyperbolic? Connect to broader
+% representation-learning questions; mention CLIP frozen features as a
+% practical foundation; flag the existing hyperbolic-embeddings literature
+% (Nickel \& Kiela 2017, Ganea et al. 2018, Khrulkov et al. 2020).
+
+\lipsum[1]
+
+% =================================================================
+\section{Problem Statement} % \approx 100 words. Owner: shared.
+% =================================================================
+% Refined research question, target/output, unit of observation.
+
+We ask: \emph{do Poincar\'e-ball embeddings trained on frozen CLIP features
+recover the WikiArt style hierarchy more faithfully than Euclidean embeddings
+of matched dimensionality and training budget?} The unit of observation is
+one painting; the target during training is its 27-way style label, with the
+hand-built lineage tree available either as an evaluation reference or as an
+auxiliary loss. We report classification accuracy, prototype-tree distance
+correlation, hierarchical clustering agreement, and local retrieval at the
+sibling and cousin level.
+
+% =================================================================
+\section{Data and Exploratory Analysis} % \approx 250 words. Owner: Valerie.
+% =================================================================
+% Pull only the EDA findings that drove modeling decisions:
+% - Class imbalance (drives balanced-acc reporting + prototype classifier).
+% - Hierarchy non-uniqueness (drives the tree-variant ablation in Sec. 6.3).
+% - Image preprocessing pipeline summary (CLIP-style normalization, 224px).
+
+\lipsum[2]
+
+% =================================================================
+\section{Methods} % \approx 600 words. Owner: Peter.
+% =================================================================
+
+\paragraph{Architecture.} A two-layer MLP with GELU and dropout maps frozen
+CLIP ViT-B/16 features ($\mathbb{R}^{512}$) to a $d$-dimensional embedding.
+A geometry-specific head produces the final embedding: identity for the
+Euclidean case, exponential map at the origin for the Poincar\'e ball,
+\(\exp_0^c(u) = \tanh(\sqrt{c}\,\|u\|) \, u / (\sqrt{c}\,\|u\|)\). A
+prototype classifier with one learnable point per style yields logits as
+$-d(z, p_k)$, where $d(\cdot,\cdot)$ is Euclidean or hyperbolic accordingly.
+
+\paragraph{Geometry, distance, and optimization.} The Poincar\'e distance
+with curvature $c > 0$ is
+\[
+  d^c(x, y) = \frac{1}{\sqrt{c}}\,\operatorname{arcosh}\!\left(
+    1 + \frac{2c\,\|x-y\|^2}{(1-c\|x\|^2)(1-c\|y\|^2)}
+  \right).
+\]
+Linear layers do not preserve the ball, so we cannot use a plain logit head;
+the prototype classifier is a natural alternative because logits are
+distances. The MLP head is optimized with Adam; the hyperbolic prototypes
+are optimized with Riemannian Adam from \texttt{geoopt}, which projects each
+update back onto the manifold.
+
+\paragraph{Hierarchy-aware loss.} The MS3 baseline trains with cross-entropy
+only and uses the hand-built tree only at evaluation time. For MS4 we add a
+regularizer that pushes the prototype-prototype distance matrix toward the
+tree distance matrix:
+\[
+  \mathcal{L} = \mathcal{L}_{CE} + \lambda \cdot \frac{1}{|\mathcal{P}|}
+    \sum_{(i,j) \in \mathcal{P}} \!\left(
+      \frac{d(p_i, p_j)}{\bar{d}} - \frac{T_{ij}}{\bar{T}}
+    \right)^{\!\!2}.
+\]
+The mean-normalization makes the term scale-invariant, so the geometry
+chooses its own absolute scale rather than fighting the classification
+objective for embedding magnitude. $\lambda = 0$ recovers MS3.
+
+\paragraph{Ground-truth trees.} The default tree is a hand-built lineage
+hierarchy following standard art-history references (Renaissance branches
+into Baroque, etc.; see Appendix~\ref{app:tree}). We additionally evaluate
+two variants: a \emph{chronological} two-level era grouping
+(Renaissance / Baroque-Rococo / 19th century / Early 20th / Modern /
+Non-Western) and a \emph{flat} tree (every leaf is a direct child of the
+root, used as a null).
+
+\paragraph{Training details.} All runs use the supplied 70/30 train/val
+split ($\approx$57k / 24k images), batch size 4096, Adam $\eta=10^{-3}$ for
+the head and $10^{-2}$ for the prototypes, weight decay $10^{-4}$, dropout
+0.1, gradient clipping at norm 1.0, 30 epochs (training is fast because the
+CLIP features are pre-cached). Each headline configuration is run with three
+seeds. The full grid (Phases 1–3, see Section~\ref{sec:results}) totals
+$\approx 200$ runs.
+
+\paragraph{Evaluation suite.} We report top-1, top-5, and balanced
+accuracy; prototype-tree and class-center-tree Spearman correlation;
+multiplicative tree distortion (mean and worst-case); dendrogram-cluster
+F1; sibling and cousin recall@$k$ for $k \in \{5, 10\}$; and Fr\'echet-mean
+nearest-prototype accuracy on Cubism as an interpolation-stability probe.
+Implementation details are in \texttt{scripts/eval.py}.
+
+% =================================================================
+\section{Results and Interpretation}\label{sec:results} % \approx 700 words. Owner: Peter / Valerie.
+% =================================================================
+
+\subsection{Phase 1 — Scaling sweep}
+% TODO: insert figure: Phase 1 scaling plot (top-1, tree spearman, sibling@5
+% vs d, by geometry; hyperbolic uses best curvature per d).
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/phase1_scaling.pdf}
+  \caption{Phase 1 — metrics versus embedding dimension $d$. Hyperbolic
+  bars show the best curvature per $d$; error bars span seed standard
+  deviation. \textbf{[Insert narrative: does hyperbolic close the gap with
+  $d$? At what $d$? On which metric?]}}
+  \label{fig:phase1}
+\end{figure}
+
+\subsection{Phase 2 — Hierarchy-aware loss}
+% TODO: insert figure: metrics vs lambda for both geometries at d=8.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/phase2_lambda.pdf}
+  \caption{Phase 2 — top-1, class-center / tree Spearman, tree distortion,
+  and sibling recall@5 versus the hierarchy-aware loss weight $\lambda$ at
+  $d = 8$, $c = 1$. \textbf{[Insert narrative: does hyperbolic catch up on
+  global metrics once trees are used at training time?]}}
+  \label{fig:phase2}
+\end{figure}
+
+\subsection{Phase 3 — Tree-variant ablation}
+% TODO: insert table comparing default / chronological / flat training trees.
+
+\subsection{Headline comparison}
+% TODO: insert summary table — best Euclidean vs best Hyperbolic across
+% phases, with seed standard deviations.
+
+\subsection{Qualitative analysis}
+% TODO: Poincare-disk plot at d=2 (prototypes + sample embeddings),
+% nearest-neighbor grid, confusion matrix block-ordered by tree.
+
+\lipsum[3]
+
+% =================================================================
+\section{Conclusions and Discussion} % \approx 250 words.
+% =================================================================
+% What we can claim, what we can't, what we'd test next.
+
+\lipsum[4]
+
+% =================================================================
+\section{Broader Impact} % \approx 100 words.
+% =================================================================
+% Cultural-heritage applications, risks of imposing a specific art-historical
+% tree, dataset biases (Western-canon-heavy), de-skilling concerns.
+
+\lipsum[5]
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\appendix
+
+\section{Style hierarchy used as the default tree}\label{app:tree}
+% Drop the dict from scripts/hierarchy.py here as a verbatim listing.
+
+\section{Full sweep results}
+% Optional: full results CSV summary tables.
+
+\end{document}
