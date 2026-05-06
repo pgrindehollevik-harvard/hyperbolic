@@ -1,41 +1,41 @@
 \section{Conclusions \& Discussion}
 \label{sec:conclusion}
 
-\paragraph{The take.} Hyperbolic geometry helps with one specific kind
-of tree-aware behaviour --- preserving local neighborhoods, so that
-the nearest neighbors of an artwork share its sub-style --- and it
-does not give us a free upgrade on classification or on global tree
-fidelity. The right framing is that geometry is a knob with a clear
-trade-off, not a hyperparameter to tune to a single optimum.
-Practitioners who care about retrieval inside fine-grained taxonomies
-should pick the Poincar\'e ball; practitioners who care about getting
-the label right on a single image should stay Euclidean. The two
-goals are in genuine tension.
+Hyperbolic geometry improves a specific kind of tree-aware behaviour
+--- the local fidelity of an embedding's nearest-neighbor structure
+--- but does not improve classification accuracy or global tree
+fidelity. Across our sweep, the geometry choice acts as a parameter
+governing a clear trade-off rather than a hyperparameter to be tuned
+toward a single optimum. The Poincar\'e ball is the appropriate
+choice for downstream tasks dominated by retrieval inside fine-grained
+taxonomies; Euclidean embeddings remain preferable for tasks whose
+primary metric is per-image classification accuracy or coarse global
+hierarchy structure. The two objectives are in measurable tension,
+and the hierarchy-aware regularizer we tested does not resolve it.
 
-\paragraph{What the numbers do not say.} They do not say hyperbolic
-embeddings are universally preferable for hierarchical image data ---
-our results say the opposite on global metrics. They do not say the
-hand-built tree is the \emph{correct} style hierarchy; tree-Spearman
-and dendrogram F1 are anchored to that specific taxonomy and a
-different art-historian would draw it differently. They do not
-generalise beyond medium-scale, Western-canon-heavy WikiArt with a
-frozen CLIP backbone --- a different dataset or a fine-tuned encoder
-could change the picture meaningfully.
+These results do not establish that hyperbolic embeddings are
+universally preferable for hierarchical image data; on global metrics
+the opposite holds in our sweep. They do not establish that the
+hand-built lineage tree is the correct reference, since tree-Spearman
+and dendrogram F1 are by construction anchored to that specific
+taxonomy. They do not generalize beyond medium-scale,
+Western-canon-heavy WikiArt with a frozen CLIP backbone; a different
+dataset, a fine-tuned encoder, or a substantially larger embedding
+might change the picture.
 
-\paragraph{Limitations and the natural extensions.} Three are most
-honest to call out. First, only the prototypes live on the manifold;
-the head MLP is still Euclidean, so the hyperbolic geometry can only
-shape the decision boundary, not the representation itself. A
-genuinely hyperbolic head along the lines of M\"obius layers
-\citep{ganea2018hyperbolic} would let the geometry do more work and
-might shift the trade-off. Second, the regularizer is a single fixed
-loss formulation: scale-invariant MSE on pairwise distances.
-Alternatives that match the rank order of tree distances (a Spearman
-surrogate) or that weight nearby pairs more heavily (Sammon-style)
-might pay smaller classification costs to achieve the same tree
-fidelity. Third, the ground-truth tree is fixed by hand; a learned
-tree along the lines of \citet{chami2020trees} would test whether the
-hand-built taxonomy is itself a bottleneck for the global metrics, and
-in particular whether the local-vs-global gap is partly an artifact of
-asking the embedding to match a tree that the data itself does not
-quite support.
+Three limitations point to natural extensions. First, only the
+prototypes live on the manifold; the head MLP remains Euclidean, so
+the hyperbolic geometry shapes the decision boundary but not the
+representation itself. A fully hyperbolic head along the lines of
+M\"obius layers \citep{ganea2018hyperbolic} would extend the
+geometry's reach and may shift the trade-off. Second, the regularizer
+is a single fixed loss: scale-invariant MSE on pairwise distances.
+Alternatives that match the rank order of tree distances (a
+Spearman-style surrogate) or that weight nearby pairs more heavily
+(Sammon-style) may achieve comparable tree fidelity at smaller
+classification cost. Third, the reference tree is fixed by hand;
+learning the tree from data along the lines of \citet{chami2020trees}
+would test whether the hand-built hierarchy is itself a bottleneck
+for the global metrics, and in particular whether the local-vs-global
+gap is partly an artifact of imposing a tree that the data does not
+fully support.

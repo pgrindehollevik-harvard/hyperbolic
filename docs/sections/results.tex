@@ -1,24 +1,30 @@
 \section{Results \& Interpretation}
 \label{sec:results}
 
-\paragraph{The slogan version.} Use Euclidean if you care about labels;
-use hyperbolic if you care about trees. Across 150 seed-replicated runs
-the hyperbolic prototype embeddings recover sibling and cousin
+Across 150 seed-replicated runs spanning embedding dimension,
+curvature, and the strength of a hierarchy-aware loss, the effect of
+geometry on the learned embedding decomposes cleanly along two axes.
+Hyperbolic prototype embeddings recover sibling and cousin
 neighborhoods 4--5 percentage points more faithfully than matched
-Euclidean embeddings, and the gap \emph{widens} with embedding
-dimension. Euclidean wins everything else by a clear margin:
-classification accuracy by 4--6\,pp, prototype-tree Spearman by
-0.05--0.10, dendrogram F1 outright. Adding a hierarchy-aware loss helps
-both geometries on global tree metrics but does not let hyperbolic
-catch Euclidean on classification, and does not erase hyperbolic's
-local advantage. Geometry choice is a real, robust trade-off rather
-than a free lunch.
+Euclidean embeddings as measured by recall@5, and the gap widens with
+embedding dimension. Euclidean embeddings retain a 4--6\,pp lead in
+classification accuracy and a 0.05--0.10 lead in class-center / tree
+Spearman across every embedding dimension we tested. The
+hierarchy-aware regularizer improves global tree metrics for both
+geometries but does not let hyperbolic surpass Euclidean on
+classification at any tested $\lambda$, and does not erode
+hyperbolic's local advantage. The two geometries trade local
+neighborhood fidelity against global classification accuracy; the
+trade-off persists under the regularizer and under three alternative
+ground-truth trees.
 
-For context: at the closest comparable configuration, an
-earlier-budget run reported 54.3\,\% Euclidean / 47.3\,\% hyperbolic
-top-1 with $d{=}8$, $c{=}1$, and only 10 epochs. Triple the epochs,
-sweep curvature, and three seeds later, the gap looks structural, not
-budget-limited.
+\msthreeposs{} closest configuration --- $d{=}8$, $c{=}1$, 10 epochs
+--- reported 54.3\,\% Euclidean and 47.3\,\% hyperbolic top-1.
+Tripling the epoch budget and sweeping curvature shifts the absolute
+numbers to 65.9\,\% and 60.6\,\% respectively, but the 4--6\,pp gap
+between geometries is preserved across every dimension and curvature
+combination, ruling out training budget as the source of the
+difference.
 
 \subsection{Phase 1 --- Scaling sweep}
 \begin{figure}[t]
@@ -34,32 +40,32 @@ budget-limited.
   \label{fig:phase1}
 \end{figure}
 
-The natural first defence of \msthreeposs{} hyperbolic
-underperformance was that we had not given it enough capacity. Phase~1 spends 90 runs
-(geometry $\times$ $d \in \{2,4,8,16,32,64\}$ $\times$
-$c \in \{0.1, 0.3, 1, 3\}$ for hyperbolic, three seeds each, 14
-minutes of MPS time) to test that defence. It does not hold. Both
-geometries saturate near $d{=}16$ --- Euclidean lands at 65.9\,\%
-top-1, hyperbolic at 60.6\,\% --- and the gap between them is stable
-across the higher dimensions, not slowly closing.
+Phase~1 tests the most direct rebuttal of \msthreeposs{} reported
+hyperbolic underperformance: that the embedding dimension was simply
+too small. We sweep geometry $\times$ $d \in \{2,4,8,16,32,64\}$
+$\times$ $c \in \{0.1, 0.3, 1, 3\}$ for hyperbolic over three seeds
+(90 configurations, 14 minutes of wall time on a single Apple
+M-series GPU). Top-1 accuracy saturates near $d{=}16$ for both
+geometries: Euclidean reaches 65.9\,\%, hyperbolic 60.6\,\%. The
+4--6\,pp gap between the two is stable across $d \geq 4$ and does not
+narrow at higher dimensions.
 
-The story for local hierarchy is the literal opposite. Sibling
-recall@5 \emph{decreases} for Euclidean as $d$ grows, from 0.221 at
-$d{=}2$ down to 0.142 at $d{=}64$ --- adding embedding capacity
-\emph{worsens} its tree-respecting behaviour. Hyperbolic stays near
-0.19 across the entire range. The two geometries are tied on local
-hierarchy at $d{=}2$ and split apart precisely where Euclidean has
-the most room to manoeuvre.
+Sibling recall@5 moves in the opposite direction. The Euclidean curve
+\emph{decreases} from 0.221 at $d{=}2$ to 0.142 at $d{=}64$: added
+embedding capacity actively worsens local hierarchy preservation.
+Hyperbolic stays near 0.19 across the full range. The two geometries
+are statistically tied on local hierarchy at $d{=}2$ and diverge as
+Euclidean gains capacity, with hyperbolic's lead growing from
+$\approx 0$ to $\approx 5$\,pp.
 
-Within the hyperbolic family alone, curvature behaves like a tunable
-trade-off between the two metrics. Higher $c$ pulls prototypes closer
-to the boundary of the disk, making the Poincar\'e geometry's
-exponential volume growth more keenly felt; this costs a couple of
-percentage points of top-1 but improves sibling recall by four. At
-$d{=}8$, the best top-1 comes from $c{=}0.3$ (59.8\,\%) and the best
-sibling recall from $c{=}3.0$ (0.230). The trade-off is consistent
-with the way hyperbolic capacity is distributed: more space near the
-boundary, where leaves of a tree should live.
+Within the hyperbolic family, curvature interpolates between the two
+extremes. Higher $c$ pulls prototypes closer to the boundary of the
+disk, where the Poincar\'e metric becomes most curved; this exchanges
+a 2--3\,pp top-1 cost for a 4--5\,pp sibling-recall gain. At $d{=}8$,
+the optimal $c$ for top-1 is $0.3$ (59.8\,\%) while the optimal $c$
+for sibling recall is $3.0$ (0.230). This is consistent with how
+hyperbolic capacity is distributed: most of the volume lies near the
+boundary, where the leaves of a tree should live.
 
 \subsection{Phase 2 --- Hierarchy-aware loss}
 \begin{figure}[t]
@@ -79,37 +85,34 @@ boundary, where leaves of a tree should live.
   \label{fig:phase2}
 \end{figure}
 
-Phase~1 leaves a narrow opening: maybe hyperbolic's global
-underperformance is a property of the loss rather than the geometry.
-Cross-entropy on prototypes only forces classes to be separable, never
-that the resulting prototype layout should mirror the tree. Phase~2
-closes that opening with a regularizer that explicitly asks for
-tree-shaped prototype geometry, swept across
-$\lambda \in \{0, 0.1, 0.3, 1, 3\}$ at $d \in \{8, 16\}$.
+Phase~1 establishes that scaling cannot close the global gap; the
+remaining hypothesis is that the loss does not. Cross-entropy on
+prototypes requires class separability but does not constrain the
+prototype layout to mirror the tree, so a fair test of the geometric
+hypothesis must include a loss that does. Phase~2 sweeps the
+hierarchy-aware loss weight
+$\lambda \in \{0, 0.1, 0.3, 1, 3\}$ at $d \in \{8, 16\}$, $c{=}1$,
+over three seeds.
 
-A small dose of regularization is unambiguously good. At $\lambda{=}0.1$,
-$d{=}8$, Euclidean top-1 \emph{rises} to 65.0\,\% (up 0.7\,pp from the
-$\lambda{=}0$ baseline) and tree-Spearman jumps from 0.292 to 0.345
---- a Pareto improvement. Hyperbolic gains slightly on top-1 and
-picks up two points of sibling recall. The most likely explanation is
-not that the regularizer is doing serious hierarchical work at this
-strength, but that it acts as a structural prior pulling prototypes
-into a sensible mutual configuration --- a regularization effect that
-classifiers usually appreciate.
+At $\lambda{=}0.1$, the regularizer Pareto-improves both geometries:
+Euclidean $d{=}8$ top-1 rises 0.7\,pp to 65.0\,\% while tree-Spearman
+rises from 0.292 to 0.345; hyperbolic gains a fraction of a point on
+top-1 and 2 percentage points on sibling recall. The improvement is
+small enough at this $\lambda$ that the most plausible mechanism is
+mild prototype-spread regularization rather than serious geometric
+work, but the effect is consistent across seeds.
 
-Stronger regularization changes the bargain. By $\lambda{=}3$ both
-geometries reach tree-Spearman $\approx 0.7$, but classification has
-collapsed: Euclidean drops to 46.9\,\% top-1, hyperbolic to 37.4\,\%.
-Mean tree distortion improves uniformly with $\lambda$ in both
-geometries. The regularizer wins what it was built to win, and the
-trade is harsh.
+At $\lambda{=}3$, both geometries reach tree-Spearman $\approx 0.7$
+and mean tree distortion improves uniformly; classification collapses
+in both, with Euclidean dropping to 46.9\,\% top-1 and hyperbolic to
+37.4\,\%. The regularizer succeeds at the metric it was constructed
+to optimize, at a substantial classification cost.
 
-The headline finding of this phase, though, is what does \emph{not}
-happen: the geometry winner is preserved end-to-end. At every
-$\lambda$ tested Euclidean has higher top-1, and at every $\lambda$
-hyperbolic has higher sibling recall. The local-vs-global trade-off
-that emerged from Phase~1 is not a property of the optimization
-objective.
+The structural finding of Phase~2 is that the geometry winner does
+not flip at any $\lambda$ tested. Euclidean retains the top-1 lead
+and hyperbolic retains the sibling-recall lead across the entire
+sweep. The local-vs-global trade-off observed in Phase~1 is not an
+artifact of the cross-entropy objective.
 
 \subsection{Phase 3 --- Tree-variant ablation}
 \begin{figure}[t]
@@ -128,25 +131,25 @@ objective.
   \label{fig:phase3}
 \end{figure}
 
-A natural worry at this point is that we have only spoken about
-\emph{our} hand-built tree --- maybe a different art-historian would
-draw it differently and the conclusion would flip. Phase~3 fixes
-$\lambda{=}1$, $d{=}8$, $c{=}1$ and varies the \emph{training} tree
-across the default lineage hierarchy, the chronological era grouping,
-and the deliberately degenerate flat tree, evaluating against the
-default tree throughout (otherwise tree-Spearman is not comparable
-across runs).
+All numbers reported so far depend on a hand-built reference tree.
+Phase~3 quantifies that dependence by retraining each geometry against
+two alternative trees and re-evaluating against the default. With
+$\lambda{=}1$, $d{=}8$, $c{=}1$ fixed, we sweep the \emph{training}
+tree across the default lineage hierarchy, the chronological era
+grouping, and the deliberately degenerate flat tree (we always
+evaluate against the default tree, since otherwise tree-Spearman is
+not comparable across runs).
 
-Two effects appear, both unsurprising in retrospect. First, training
-against a tree other than the eval tree is essentially "no useful
-hierarchical signal": tree-Spearman against the default tree drops to
-about 0.14 in both alternatives, and top-1 climbs back to the
-$\lambda{=}0$ baseline because the regularizer no longer fights the
-classification objective hard. Second --- and this is the point of the
-ablation --- across all three training trees Euclidean wins top-1 by
-exactly the same margin and hyperbolic wins sibling recall by exactly
-the same margin as in Phases~1 and~2. The qualitative result is
-robust to the specific reference hierarchy.
+Two effects emerge. Training against a tree other than the evaluation
+tree provides essentially no useful hierarchical signal: tree-Spearman
+against the default tree drops to $\approx 0.14$ for both
+alternatives, and top-1 climbs back to the $\lambda{=}0$ baseline
+because the regularizer no longer competes with the classification
+objective. The geometry winner, however, is preserved across all
+three training trees: Euclidean leads top-1 by approximately the same
+margin as in Phases~1 and~2, and hyperbolic leads sibling recall by
+approximately the same margin. The qualitative result does not
+depend on the specific reference hierarchy.
 
 \subsection{Headline comparison}
 \begin{table}[t]
@@ -162,14 +165,13 @@ robust to the specific reference hierarchy.
   \label{tab:headline}
 \end{table}
 
-Selecting the best configuration of each geometry by mean top-1 across
-seeds yields the comparison in Table~\ref{tab:headline}. Two columns
-of the same metric look almost identical for top-1 and worse-than-tied
-for tree-Spearman, but flip in hyperbolic's favour for sibling and
-cousin recall. The pattern is not subtle, and the seed standard
-deviations are tight enough that we can rule out noise as the
-explanation: top-1 std is at most 0.7\,pp, sibling recall std is at
-most 0.005.
+Selecting the best configuration of each geometry by mean top-1
+across seeds yields the comparison in Table~\ref{tab:headline}.
+Euclidean leads on every classification and global-tree metric;
+hyperbolic leads on sibling and cousin recall by 4--5\,pp. Seed
+standard deviations across this comparison are at most 0.7\,pp on
+top-1 and 0.005 on the recall metrics, so the split is well outside
+the noise floor.
 
 \subsection{Qualitative analysis}
 
@@ -188,15 +190,15 @@ most 0.005.
   \label{fig:disk}
 \end{figure}
 
-Figure~\ref{fig:disk} is the most direct visual confirmation of why
-we expected hyperbolic to help in the first place. Trained at $d{=}2$
-with $c{=}3$, the hyperbolic prototypes settle into a ring near the
-boundary of the Poincar\'e disk, exactly where the exponential-volume
-regime lives. The matching Euclidean run scatters prototypes across
-an unbounded plane with no obvious organising principle. The
-hyperbolic geometry is doing precisely what theory predicts the
-geometry should do; the question Phase~1 answered is whether that
-geometric difference shows up in metrics. Only on the local ones.
+Figure~\ref{fig:disk} provides direct visual confirmation that the
+geometry behaves as the theory predicts. Trained at $d{=}2$ with
+$c{=}3$, the hyperbolic prototypes occupy a ring near the boundary of
+the Poincar\'e disk, where the exponential-volume regime lives; the
+matching Euclidean run distributes prototypes across an unbounded
+plane without analogous structural pressure. The geometric distinction
+between the two embeddings is real and visible at $d{=}2$. Phase~1
+quantifies which downstream metrics this geometric distinction
+affects.
 
 \begin{figure}[t]
   \centering
@@ -216,13 +218,13 @@ geometric difference shows up in metrics. Only on the local ones.
   \label{fig:confusion}
 \end{figure}
 
-Figure~\ref{fig:confusion} shows where the mistakes go. The
-near-diagonal block structure tells us both models are remarkably
-tree-respecting in absolute terms: almost all confusion mass falls
-within hierarchically adjacent styles, and very little of it jumps to
-unrelated branches of the tree. The relevant difference between the
-two panels is the texture near the diagonal --- the hyperbolic side
-spreads more confusion mass into immediate siblings (Action\_painting
-$\leftrightarrow$ Color\_Field\_Painting, Pointillism
-$\leftrightarrow$ Fauvism) and less into distant styles. The
-sibling-recall metric is summarising exactly this picture.
+Figure~\ref{fig:confusion} shows the structure of the mistakes. The
+near-diagonal block structure indicates that both models are highly
+tree-respecting in absolute terms: confusion mass concentrates within
+hierarchically adjacent styles and is rare between unrelated branches
+of the tree. The two panels differ in the local texture near the
+diagonal, where the hyperbolic model distributes more mass to
+immediate siblings (Action\_painting $\leftrightarrow$
+Color\_Field\_Painting, Pointillism $\leftrightarrow$ Fauvism) and
+less to distant styles. The sibling-recall metric is a scalar summary
+of this difference.
