@@ -24,7 +24,14 @@ we can explore the geometric advantage
 empirically rather than simply argue about the theory. 
 
 Hyperbolic image embeddings have been shown to help on few-shot
-benchmarks \citep{khrulkov2020hyperbolic}, but it remains open whether
-the advantage holds for hand-built hierarchies. We explore this question 
-through a sweep over curvature and dimension  against a Euclidean baseline 
-and a sensitivity check across alternative reference trees.
+classification and on retrieval-style metrics in
+\citet{khrulkov2020hyperbolic}, while reportedly providing little or
+no improvement on standard supervised classification accuracy. This
+asymmetry --- helps with neighborhood structure, doesn't help with
+top-1 --- is directly relevant to the local-vs-classification split
+we observe. It remains open, however, whether the advantage holds
+for embeddings supervised against a hand-built hierarchy. We explore
+this through a sweep over curvature and dimension against a
+Euclidean baseline, a hierarchy-aware loss that uses the tree at
+training time, and a sensitivity check across alternative reference
+trees.

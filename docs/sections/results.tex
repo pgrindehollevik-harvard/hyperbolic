@@ -371,12 +371,21 @@ the noise floor.
 Figure~\ref{fig:disk} provides direct visual confirmation that the
 geometry behaves as the theory predicts. Trained at $d{=}2$ with
 $c{=}3$, the hyperbolic prototypes occupy a ring near the boundary of
-the Poincar\'e disk, where the exponential-volume regime lives; the
-matching Euclidean run distributes prototypes across an unbounded
-plane without analogous structural pressure. The geometric distinction
-between the two embeddings is real and visible at $d{=}2$. Phase~1
-quantifies which downstream metrics this geometric distinction
-affects.
+the Poincar\'e disk: the boundary lies at radius
+$1/\sqrt{c} \approx 0.577$, and the prototypes' mean radius is
+$0.561$ with standard deviation $0.013$ across all 27 styles --- they
+are all essentially on the boundary. The matching Euclidean run
+spreads prototypes across an unbounded plane (mean radius $2.96$,
+std $0.995$) with no analogous structural pressure. A consequence
+worth flagging for the reader: at $d{=}2$ the hyperbolic prototypes
+occupy effectively a one-dimensional subset of the manifold (angle
+on the boundary) rather than spreading through the disk's interior,
+so the model is using only one of the two available dimensions of
+hyperbolic capacity. This is consistent with the
+near-boundary-volume regime predicted for trees \citep{sala2018representation}, but it also means
+the $d{=}2$ comparison probes a degenerate configuration; the sweep
+in Phase~1 verifies that the local advantage strengthens at higher
+$d$ where this collapse no longer applies.
 
 \begin{figure}[t]
   \centering
