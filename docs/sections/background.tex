@@ -4,19 +4,20 @@ Artistic style is hierarchical. Broad traditions branch into finer
 movements, and finer movements branch again into sub-styles along
 lines of historical influence: Early Renaissance leads to Baroque,
 Baroque to Romanticism, Romanticism to Impressionism, and
-Impressionism to Cubism ect. An
+Impressionism to Cubism etc. An
 embedding that reflects this branching structure should be more
 useful for tasks that depend on it, such as influence-aware retrieval 
 and educational tools that organize
 collections by lineage rather than by raw visual similarity alone.
 
-Standard image embeddings live in $\mathbb{R}^d$. In this space, the volume of
+Standard image embeddings live in Euclidean space: $\mathbb{R}^d$. In this geometry, the volume of
 a ball at radius $r$ grows polynomially in $r$. A tree, by contrast,
-has a node count at depth $k$ that grows exponentially in $k$. Forcing
-tree-like data into Euclidean coordinates therefore distorts pairwise
-distances, and the distortion widens as the tree deepens. Hyperbolic
-geometry, and the Poincar\'{e} ball in particular, exhibits
-exponential volume growth and embeds trees with low distortion
+has a node count at depth $k$ that grows exponentially in $k$. Therefore, embedding 
+tree-like data into a Euclidean embedding can run into issues caused by spatial contraints.  
+Pairwise distances between nodes distort, and the distortion only widens as the tree deepens. 
+
+Hyperbolic geometry, and the Poincar\'{e} ball in particular, exhibits
+exponential volume growth and embeds trees more naturally
 \citep{nickel2017poincare,sala2018representation}. Riemannian
 optimization on the ball is now standard
 (\texttt{geoopt} \citep{kochurov2020geoopt}), so the geometric advantage
