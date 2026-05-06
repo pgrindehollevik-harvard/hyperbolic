@@ -1,54 +1,63 @@
 \section{Conclusions \& Discussion}
 \label{sec:conclusion}
 
-The local advantage of hyperbolic embeddings on this dataset is real
-and survives every robustness check we ran. Sibling and cousin
-recall@5 favour hyperbolic embeddings by 4--5 percentage points at
-every $d \geq 4$, the gap widens as $d$ grows, the hierarchy-aware
-loss does not erase it, and the result is independent of which of
-three alternative reference trees is used. The local-vs-global
-trade-off observed against the hand-built tree, however, is not as
-clean a story as it first appears: when we replaced the hand-built
-reference with a data-driven tree built from CLIP feature centroids,
-the global-Spearman gap inverted in hyperbolic's favour at every
-$d \geq 4$. The apparent global \emph{disadvantage} of hyperbolic
-embeddings was an artifact of imposing a reference taxonomy that the
-encoder's features only weakly support. Classification accuracy
-remains a separate question: there Euclidean leads by 4--6\,pp at
-every configuration we tested, and that gap is reference-tree
-independent.
+The clean finding of this paper is that hyperbolic prototype geometry
+is the only one of our two trained models that meaningfully improves
+over the encoder on local hierarchy preservation. Sibling recall@5 at
+$d{=}8$ is $0.195$ for hyperbolic, $0.149$ for Euclidean, and $0.160$
+for $k$-NN-5 on raw CLIP features. The Euclidean prototype classifier
+is operationally tied with the encoder's own nearest-neighbor
+behaviour; the hyperbolic prototype classifier improves on it by
+$3.5$\,pp. The advantage holds when sibling sets are redefined from
+a data-driven empirical tree
+($0.416$ vs.\ $0.356$ vs.\ $0.366$ at $d{=}8$) and aggregates to
+$+8.7$\,pp over the full Phase~1 sweep with paired-$t$
+$p<10^{-4}$. This is the strongest claim our experiments support.
 
-What our results do and do not establish is therefore narrower than
-the headline allows. They establish that, for 27-way style
-classification on frozen CLIP features, the Poincar\'e ball preserves
-local hierarchy more faithfully than Euclidean space and aligns
-better with the data's own implicit similarity structure once the
-arbitrariness of the hand-built reference is accounted for. They do
-\emph{not} establish that hyperbolic embeddings are universally
-preferable: Euclidean embeddings keep a robust classification-accuracy
-lead, and a different dataset, encoder, or downstream task could
-shift the balance. They do not establish that the data-driven tree
-is itself ``the right tree'' --- it is one specific construction,
-biased toward CLIP's representation space, and it should not be
-treated as more authoritative than the hand-built lineage tree
-without external corroboration.
+The classification gap, by contrast, is real but uninformative about
+the geometry. A logistic-regression head on raw CLIP features
+achieves $64.1$\,\% top-1, which the Euclidean prototype matches
+($64.3$\,\%) and which the hyperbolic prototype underperforms
+($59.8$\,\%, best curvature). The $4$--$6$\,pp Eu-vs-Hy
+classification gap is robust across configurations, but neither
+geometry is doing meaningful classification work that a linear head
+on the same input cannot. We resist describing this as the geometry
+``winning'' classification: a linear baseline does as well, so what
+the result tells us is that Euclidean prototype distances do not
+distort classification beyond what the encoder already supports,
+while hyperbolic prototype distances do.
 
-Three limitations point to natural extensions. First, only the
-prototypes live on the manifold; the head MLP remains Euclidean, so
-the geometry shapes the decision boundary but not the representation
-itself. A fully hyperbolic head along the lines of M\"obius layers
-\citep{ganea2018hyperbolic} would extend the geometry's reach and
-may shift the trade-off. Second, the regularizer is a single fixed
-loss --- scale-invariant MSE on pairwise distances. Alternatives
-that match the rank order of tree distances (a Spearman-style
-surrogate) or that weight nearby pairs more heavily (Sammon-style)
-may achieve comparable tree fidelity at smaller classification cost.
-Third, our empirical reference tree is constructed in Euclidean
-space from CLIP centroids. Building it from a hyperbolic embedding,
-or from cophenetic distances under non-Euclidean linkages, or by
-direct tree-learning methods \citep{chami2020trees}, would test how
-much of Phase~4's conclusion is robust to the construction choice.
-The most informative next step is probably the second one: a
-comparison across several reasonable empirical trees would make the
-``hyperbolic aligns with the data's structure'' claim load-bearing
-or expose it as a quirk of one specific construction.
+The global-tree-fidelity story is the place where careful framing
+matters most, and where the paper makes the smallest claim. Mean
+tree distortion is significantly lower for Euclidean prototypes
+against the default tree ($p<10^{-4}$). Class-center / tree Spearman
+is not significantly different from zero across the full sweep
+($p=0.68$, sign agreement $0.50$) and reverses sign against the
+data-driven empirical reference tree. ``Euclidean prototype distances
+are closer in pairwise rank to the hand-built tree than hyperbolic
+ones'' is therefore an unstable claim, and we explicitly do not make
+it.
+
+What we cannot conclude. We cannot generalize beyond medium-scale,
+Western-canon-heavy WikiArt with a frozen CLIP-ViT-B/16 backbone;
+the local advantage we identify may not survive a fine-tuned encoder
+or a different dataset, especially one where the hierarchy is much
+deeper or wider than 27 leaves. We cannot conclude that the
+hyperbolic geometry does substantive work in the head MLP, since
+only the prototypes live on the manifold. We cannot conclude from
+Phase~4 alone that hyperbolic embeddings are ``closer to the truth''
+than Euclidean ones --- the empirical tree is one construction with
+known biases, and the most direct way to test the claim is to build
+analogous empirical trees from a different encoder
+(e.g., DINOv2) and from a hyperbolic-space linkage.
+
+Three limitations point to natural extensions, listed in
+order of cost-to-payoff. \textit{(i)} A genuinely hyperbolic head
+along the lines of M\"obius layers \citep{ganea2018hyperbolic} would
+let the manifold shape the representation rather than only the
+decision boundary, and is the cheapest way to test whether the
+classification gap closes. \textit{(ii)} An empirical reference tree
+built from a different encoder (DINOv2 or MAE features) would test
+whether Phase~4's geometry comparison is CLIP-specific. \textit{(iii)}
+A learned tree along the lines of \citet{chami2020trees} would close
+the loop by removing the imposed reference altogether.

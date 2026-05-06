@@ -1,35 +1,52 @@
 \section{Results \& Interpretation}
 \label{sec:results}
 
-Across 150 seed-replicated runs spanning embedding dimension,
-curvature, and the strength of a hierarchy-aware loss, the effect of
-geometry on the learned embedding separates cleanly along two axes.
-Hyperbolic prototype embeddings recover sibling and cousin
-neighborhoods 4--5 percentage points more faithfully than matched
-Euclidean embeddings as measured by recall@5, and the gap widens
-with embedding dimension. Euclidean embeddings retain a 4--6\,pp
-lead in classification accuracy across every embedding dimension we
-tested. The picture for global tree fidelity is more nuanced: against
-the hand-built default reference, Euclidean leads class-center / tree
-Spearman by $\approx 0.05$--$0.10$, but the hand-built reference tree
-correlates only weakly with a data-driven empirical tree built from
-CLIP feature centroids ($\rho = 0.08$ on pairwise distances), and
-\emph{against the empirical tree}, hyperbolic prototypes lead at
-every $d \geq 4$ (Phase~4, Figure~\ref{fig:phase4}). The
-hierarchy-aware regularizer improves global tree metrics for both
-geometries but does not flip the geometry winner on either local or
-global axes. The local advantage of hyperbolic embeddings is real
-and reference-tree-independent; the global advantage of Euclidean
-embeddings is tree-dependent and disappears against the data's own
-implicit hierarchy.
+Three findings emerge from 150 seed-replicated runs spanning
+embedding dimension, curvature, and the strength of the
+hierarchy-aware loss. We summarise them up front and develop each in
+the corresponding subsection.
 
-\msthreeposs{} closest configuration --- $d{=}8$, $c{=}1$, 10 epochs
---- reported 54.3\,\% Euclidean and 47.3\,\% hyperbolic top-1.
-Tripling the epoch budget and sweeping curvature shifts the absolute
-numbers to 65.9\,\% and 60.6\,\% respectively, but the 4--6\,pp gap
-between geometries is preserved across every dimension and curvature
-combination, ruling out training budget as the source of the
-difference.
+\textbf{Hyperbolic prototypes recover local hierarchy substantially
+better than matched Euclidean ones.} Sibling recall@5 is consistently
+higher for the hyperbolic geometry --- 0.195 vs.\ 0.149 at $d{=}8$ on
+the default tree, and 0.416 vs.\ 0.356 at $d{=}8$ when sibling sets
+are redefined from a data-driven empirical tree built from CLIP
+centroids. Aggregated across 18 paired seed configurations (six
+embedding dimensions $\times$ three seeds) the mean gap is
+$+8.7$\,pp on sibling recall and $+15.2$\,pp on cousin recall, with
+sign agreement $0.94$ on each and paired-$t$ $p<10^{-4}$. The
+hierarchy-aware loss does not erase it, the choice of training tree
+in Phase~3 does not flip it, and the empirical-tree sibling
+redefinition does not weaken it.
+
+\textbf{Euclidean prototypes are essentially tied with a linear head
+on raw CLIP features for classification, while hyperbolic prototypes
+are the only model that meaningfully outperforms a $k$-NN baseline
+on retrieval.} A logistic-regression classifier on raw 512-d CLIP
+features achieves 64.1\,\% top-1 against our best Euclidean
+prototype's 64.3\,\%; a $k$-NN-5 retrieval baseline on raw CLIP
+features achieves sibling recall@5 of $0.160 / 0.366$ (default /
+empirical tree) against the Euclidean prototype's $0.149 / 0.356$.
+On classification, our Euclidean prototype classifier adds no
+detectable value over a linear head on the same input features. On
+local hierarchy, only the hyperbolic prototype classifier beats the
+$k$-NN baseline (Hy $0.195 / 0.416$ at $d{=}8$). The classification
+gap of $4$--$6$\,pp between Euclidean and hyperbolic prototypes is
+real, but it is a gap between two models that already match a much
+simpler baseline on top-1.
+
+\textbf{The global tree-Spearman gap is not significant across the
+sweep.} Aggregated paired-$t$ tests over the full Phase~1 sweep give
+$p=0.68$ for class-center / tree Spearman against the default tree
+and a sign agreement of exactly $0.50$. The widely-cited claim from
+prior work and from earlier drafts of this paper that ``Euclidean
+wins global tree metrics'' holds only at the headline-winner level,
+and is contradicted by Phase~4 where the global-Spearman gap reverses
+against an empirical reference tree (Section~\ref{ssec:phase4}).
+Tree distortion does favour Euclidean significantly ($+0.040$ mean
+distortion gap, $p<10^{-4}$), so the two metrics for global tree
+fidelity disagree about which geometry wins. We discuss this
+carefully rather than collapse it into a single direction.
 
 \subsection{Phase 1 --- Scaling sweep}
 \begin{figure}[t]
@@ -157,61 +174,136 @@ approximately the same margin. The qualitative result does not
 depend on the specific reference hierarchy.
 
 \subsection{Phase 4 --- Empirical reference tree}
+\label{ssec:phase4}
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/phase4_empirical_tree.pdf}
-  \caption{Phase~4: prototype-distance/tree-distance Spearman against
-  the hand-built default tree (blue) and an empirical tree
+  \caption{Phase~4: prototype-distance / tree-distance Spearman
+  against the hand-built default tree (blue) and an empirical tree
   constructed by agglomerative clustering of class-mean CLIP features
-  on the training split (red). The two trees correlate at Spearman
-  $0.08$ on pairwise distances --- nearly orthogonal taxonomies of
-  the same 27 styles. Both geometries' prototype distances align
-  substantially better with the empirical tree ($\sim 0.40$) than
-  with the hand-built tree ($\sim 0.10$). The geometry winner on
-  global tree-Spearman inverts at every $d \geq 4$: against the
-  empirical tree, hyperbolic narrowly leads.}
+  on the training split (red). The two reference trees correlate at
+  Spearman $0.08$ on pairwise distances. Both geometries' prototypes
+  align substantially better with the empirical tree than with the
+  hand-built one. \emph{Caveat:} the empirical tree is built in
+  Euclidean space from the same CLIP features used to train the
+  prototypes, so the alignment with prototype distances is partly
+  expected by construction. The geometry comparison is the
+  load-bearing claim, not the absolute level.}
   \label{fig:phase4}
 \end{figure}
 
-Phase~3 tested whether retraining against alternative ground-truth
-trees changes which geometry wins. Phase~4 tests a different
-question: what if the hand-built default tree is itself the wrong
-reference, and the global-Spearman gap is partly an artifact of that
-choice? We construct an empirical tree by computing the mean CLIP
-feature vector for each of the 27 styles on the training split,
-running agglomerative clustering with average linkage in Euclidean
-space, and converting the resulting binary dendrogram to an integer
-edge-count distance matrix. The result is an unsupervised reference
-that records what the encoder actually treats as similar, with no
-art-historian in the loop.
+Phases~1--3 score every global-tree metric against a hand-built
+lineage tree. The findings could therefore reflect properties of
+that specific taxonomy rather than of the embeddings. Phase~4
+constructs an alternative reference --- an empirical tree built by
+running agglomerative clustering with average linkage on class-mean
+CLIP features from the training split, then converting the binary
+dendrogram to integer edge-count distances --- and re-evaluates the
+Phase~1 winners against it.
 
-The two reference trees correlate weakly. Spearman correlation
-between hand-built and empirical pairwise distances is $0.08$, and
-between chronological (Phase~3) and empirical pairwise distances is
+\paragraph{Caveat on circularity.} The empirical tree is built from
+CLIP features in Euclidean space, and the prototypes being evaluated
+are trained from the same CLIP features. A finding that
+``trained-on-CLIP prototypes align with a tree built from CLIP-feature
+similarity'' is therefore close to tautological in the direction of
+agreement, and the absolute alignment values
+($\rho \approx 0.40$ on Spearman) should not be interpreted as
+``correctly recovering the true hierarchy.'' The interesting
+question is the comparison between geometries on the same reference
+tree, holding the construction fixed.
+
+\paragraph{Tree-vs-tree.} Spearman correlation on pairwise distances
+between hand-built and empirical trees is $0.08$, and between the
+chronological era grouping (Phase~3) and the empirical tree is
 $0.30$. The hand-built lineage tree and the data-driven tree are
-near-orthogonal taxonomies of the same set of styles.
+near-orthogonal taxonomies of the same 27 styles.
 
-Re-evaluating the Phase~1 winners against the empirical tree
-inverts the global-Spearman finding. Both geometries' prototype
+\paragraph{Global tree-Spearman.} Both geometries' prototype
 distances align far more closely with the empirical tree
 ($\rho \approx 0.40$ at every $d$) than with the hand-built tree
-($\rho \in [-0.04, 0.16]$, often near zero). At $d{=}2$ Euclidean
-prototypes lead substantially, but for every $d \geq 4$ hyperbolic
-prototypes are slightly more aligned with the empirical tree:
-$\rho_{\textrm{Hy}} - \rho_{\textrm{Eu}} \in [+0.01, +0.05]$ at
-$d \in \{8, 16, 32, 64\}$. Sibling and cousin recall numbers are
-unchanged, since those metrics measure local label-neighborhood
-agreement and do not depend on a tree at all.
+($\rho \in [-0.04, 0.16]$). At $d{=}2$ Euclidean prototypes lead
+substantially; for every $d \geq 4$ hyperbolic prototypes are
+slightly more aligned with the empirical tree
+($\rho_{\textrm{Hy}} - \rho_{\textrm{Eu}} \in [+0.01, +0.05]$ at
+$d \in \{8, 16, 32, 64\}$). Read together with the
+non-significant default-tree gap reported in the headline
+($p=0.68$), the evidence for a Euclidean global-Spearman lead is
+weak across both reference trees.
 
-The implication is two-sided. The local advantage of hyperbolic
-embeddings is real and tree-independent. The apparent global
-\emph{disadvantage} reported in Phases~1--3, however, is partly an
-artifact of imposing a hand-built reference tree that the data only
-loosely supports. Against a tree the data itself produces,
-hyperbolic prototypes either tie or modestly beat Euclidean ones at
-the global level. The local-vs-global trade-off becomes a
-local-and-global advantage --- modest, but consistent --- once the
-reference is data-driven.
+\paragraph{Empirical-tree sibling and cousin recall.} A version of
+this paper before reviewer feedback claimed that local recall metrics
+``do not depend on a tree at all.'' That was wrong: the sibling and
+cousin sets used by recall@5 in Phases~1--3 are derived from
+\texttt{STYLE\_HIERARCHY} (the default tree). To test whether the
+local advantage of hyperbolic survives a different sibling-set
+definition, we rebuild sibling and cousin sets from the empirical
+tree's binary linkage --- siblings being the leaves in the other
+branch of the leaf's first merge, cousins the leaves in the uncle
+subtree at the grandparent merge --- and rerun the recall
+computation. Figure~\ref{fig:empirical_recall} shows the result.
+The hyperbolic lead is preserved and slightly larger under empirical
+siblings: at $d{=}8$, sibling recall@5 is $0.416$ for hyperbolic
+vs.\ $0.356$ for Euclidean against empirical-tree siblings (Hy lead
+$+6.0$\,pp), compared to $0.195$ vs.\ $0.149$ on default-tree
+siblings (Hy lead $+4.6$\,pp). The local advantage of hyperbolic
+embeddings is reference-tree-independent in the strict sense that
+the comparison holds when the sibling set itself is redefined.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/empirical_recall.pdf}
+  \caption{Sibling and cousin recall@5 with relations defined by the
+  default tree (dashed) and the empirical tree (solid), per geometry
+  per embedding dimension. The hyperbolic lead is preserved under
+  the empirical-tree redefinition; on sibling recall the gap widens
+  slightly.}
+  \label{fig:empirical_recall}
+\end{figure}
+
+\subsection{Calibration baselines}
+\label{ssec:baselines}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.85\linewidth]{figures/pareto.pdf}
+  \caption{Top-1 accuracy versus sibling recall@5 for every Phase 1
+  and Phase 2 sweep configuration. Marker size scales with the
+  hierarchy-aware loss weight $\lambda$. The vertical dotted line
+  is logistic-regression top-1 on raw CLIP features; the black star
+  is $k$-NN-5 on raw CLIP features. The Euclidean cluster sits below
+  the kNN baseline on retrieval; only hyperbolic configurations
+  populate the upper region of the plot.}
+  \label{fig:pareto}
+\end{figure}
+
+A reader cannot judge a $65.9$\,\% top-1 number without external
+calibration. Two reference classifiers train directly on raw frozen
+CLIP features, with no learned head and no prototype objective:
+
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\item \textbf{Logistic regression} (one linear layer, no MLP head)
+on the 512-d CLIP features achieves $64.1$\,\% top-1 and
+$61.1$\,\% balanced accuracy.
+\item \textbf{$k$-NN-5} retrieval on raw CLIP features achieves
+$63.5$\,\% top-1 and $58.8$\,\% balanced accuracy. Sibling recall@5
+is $0.160$ on default-tree relations and $0.366$ on empirical-tree
+relations.
+\end{itemize}
+
+The Euclidean prototype classifier matches but does not beat the
+logistic regression on top-1 ($64.3$\,\% vs.\ $64.1$\,\%) and
+matches but does not beat $k$-NN-5 on sibling recall ($0.149 / 0.356$
+vs.\ $0.160 / 0.366$). The hyperbolic prototype classifier is
+$\sim 4$\,pp behind logistic on top-1 ($59.8$\,\%) but
+$3.5$--$5$\,pp \emph{ahead} of $k$-NN-5 on sibling recall
+($0.195 / 0.416$). Figure~\ref{fig:pareto} plots the full
+top-1-vs-sibling-recall scatter: the Euclidean cluster sits in the
+lower-right where $k$-NN already lives; only the hyperbolic
+configurations populate the upper portion of the plot. On this
+dataset and with this encoder, the trained Euclidean prototype
+classifier provides no detectable improvement over a linear head;
+the trained hyperbolic prototype classifier provides an improvement
+over the encoder only on local hierarchy.
 
 \subsection{Robustness to class-imbalance handling}
 

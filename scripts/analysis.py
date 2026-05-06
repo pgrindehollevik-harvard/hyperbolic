@@ -29,7 +29,6 @@ HEADLINE_METRICS: dict[str, str] = {
     "dendrogram_cluster_f1": "Dendrogram F1",
     "knn_siblings_recall_at_5": "Sibling recall@5",
     "knn_cousins_recall_at_5": "Cousin recall@5",
-    "frechet_nearest_prototype_accuracy": "Fréchet (Cubism) acc.",
 }
 
 HIGHER_IS_BETTER: set[str] = {
