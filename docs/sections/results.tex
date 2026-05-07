@@ -8,7 +8,7 @@ the corresponding subsection.
 
 \textbf{Hyperbolic prototypes recover local hierarchy substantially
 better than matched Euclidean ones.} Sibling recall@5 is consistently
-higher for the hyperbolic geometry --- 0.195 vs.\ 0.149 at $d{=}8$ on
+higher for the hyperbolic geometry: 0.195 vs.\ 0.149 at $d{=}8$ on
 the default tree, and 0.416 vs.\ 0.356 at $d{=}8$ when sibling sets
 are redefined from a data-driven empirical tree built from CLIP
 centroids. Aggregated across 18 paired seed configurations (six
@@ -57,7 +57,7 @@ carefully rather than collapse it into a single direction.
   $d$ and per seed; error bars are seed standard deviation. Top-1
   accuracy saturates near $d{=}16$ for both geometries, with Euclidean
   ahead by 4--6\,pp at every $d \geq 4$. Sibling recall@5
-  \emph{decreases} with $d$ for Euclidean but stays nearly flat for
+  decreases with $d$ for Euclidean but stays nearly flat for
   hyperbolic, opening a 5\,pp gap by $d{=}64$.}
   \label{fig:phase1}
 \end{figure}
@@ -73,7 +73,7 @@ geometries: Euclidean reaches 65.9\,\%, hyperbolic 60.6\,\%. The
 narrow at higher dimensions.
 
 Sibling recall@5 moves in the opposite direction. The Euclidean curve
-\emph{decreases} from 0.221 at $d{=}2$ to 0.142 at $d{=}64$: added
+decreases from 0.221 at $d{=}2$ to 0.142 at $d{=}64$: added
 embedding capacity actively worsens local hierarchy preservation.
 Hyperbolic stays near 0.19 across the full range. The two geometries
 are statistically tied on local hierarchy at $d{=}2$ and diverge as
@@ -99,7 +99,7 @@ boundary, where the leaves of a tree should live.
   regularizer drives tree-Spearman from $\sim$0.3 to $\sim$0.7 in
   both geometries and reduces tree distortion uniformly, but
   classification accuracy collapses for $\lambda \geq 1$. The
-  hyperbolic top-1 advantage \emph{never} catches up to Euclidean.
+  hyperbolic top-1 advantage never catches up to Euclidean.
   Sibling recall is stable for hyperbolic across all $\lambda$; for
   Euclidean it only rises at the largest tested $\lambda$, where its
   classification has already given up most of what it gained from
@@ -137,7 +137,7 @@ sibling-recall lead at every $\lambda$. (We say ``relative ordering''
 rather than ``global winner'' because the apparent Euclidean lead on
 global tree-Spearman against the default tree is not significant
 across the sweep, and reverses sign against the empirical reference
-tree --- see Section~\ref{ssec:phase4}.) The local advantage of
+tree; see Section~\ref{ssec:phase4}.) The local advantage of
 hyperbolic is not an artifact of the cross-entropy objective.
 
 \subsection{Phase 3 --- Tree-variant ablation}
@@ -150,7 +150,7 @@ hyperbolic is not an artifact of the cross-entropy objective.
   deviation. Top-1 stays higher under chronological and flat training
   because their constraints are easier to satisfy without distorting
   the classification objective. Tree-Spearman against the default tree
-  collapses for the non-default training trees --- the regularizer
+  collapses for the non-default training trees: the regularizer
   only helps the metric anchored to the training tree. The geometry
   winner does not change on any panel: Euclidean wins top-1 on every
   tree, hyperbolic wins sibling recall on every tree.}
@@ -202,10 +202,10 @@ direction.
 Phases~1--3 score every global-tree metric against a hand-built
 lineage tree. The findings could therefore reflect properties of
 that specific taxonomy rather than of the embeddings. Phase~4
-constructs an alternative reference --- an empirical tree built by
+constructs an alternative reference (an empirical tree built by
 running agglomerative clustering with average linkage on class-mean
 CLIP features from the training split, then converting the binary
-dendrogram to integer edge-count distances --- and re-evaluates the
+dendrogram to integer edge-count distances) and re-evaluates the
 Phase~1 winners against it.
 
 \paragraph{Caveat on circularity.} The empirical tree is built from
@@ -244,9 +244,9 @@ cousin sets used by recall@5 in Phases~1--3 are derived from
 \texttt{STYLE\_HIERARCHY} (the default tree). To test whether the
 local advantage of hyperbolic survives a different sibling-set
 definition, we rebuild sibling and cousin sets from the empirical
-tree's binary linkage --- siblings being the leaves in the other
-branch of the leaf's first merge, cousins the leaves in the uncle
-subtree at the grandparent merge --- and rerun the recall
+tree's binary linkage (siblings being the leaves in the other
+branch of the leaf's first merge; cousins the leaves in the uncle
+subtree at the grandparent merge) and rerun the recall
 computation. Figure~\ref{fig:empirical_recall} shows the result.
 The hyperbolic lead is preserved and slightly larger under empirical
 siblings: at $d{=}8$, sibling recall@5 is $0.416$ for hyperbolic
@@ -301,11 +301,11 @@ Read against these baselines, the comparison sharpens. Our best
 Euclidean configuration (highest top-1 over the sweep) reaches
 $65.9$\,\% top-1, beating logistic regression by only $1.8$\,pp; on
 balanced accuracy it underperforms logistic ($55.4$\,\% vs.\
-$61.1$\,\%). Best-top-1 Euclidean's sibling recall@5 is $0.136$ ---
-\emph{below} the $k$-NN baseline of $0.160$. The hyperbolic
+$61.1$\,\%). Best-top-1 Euclidean's sibling recall@5 is $0.136$,
+below the $k$-NN baseline of $0.160$. The hyperbolic
 configuration that maximises top-1 reaches $60.6$\,\% top-1
 (below both the linear head and the kNN baseline) but achieves
-sibling recall $0.188$ --- $2.8$\,pp \emph{above} kNN. At $d{=}8$
+sibling recall $0.188$, $2.8$\,pp above kNN. At $d{=}8$
 specifically, where the local-vs-global comparison through the rest
 of the paper sits, hyperbolic sibling recall@5 reaches $0.195$ on the
 default tree and $0.416$ on the empirical tree, against the kNN
@@ -316,7 +316,7 @@ already lives; only the hyperbolic configurations populate the upper
 portion of the plot. On this dataset and with this encoder, the
 trained Euclidean prototype classifier provides no detectable
 improvement over a linear head and trades classification accuracy
-for sibling recall \emph{below} the kNN baseline. The trained
+for sibling recall below the kNN baseline. The trained
 hyperbolic prototype classifier improves on the encoder only on
 local hierarchy, but it is the only model in our experiments that
 does so.
@@ -330,11 +330,11 @@ the geometry comparison is itself an artifact of the loss being
 dominated by the largest classes. We rerun the $d{=}8$ winner of
 each geometry (Euclidean, and hyperbolic at $c{=}0.3$) with
 inverse-frequency class-weighted cross-entropy, three seeds.
-Class-weighted training shifts the absolute numbers as expected ---
+Class-weighted training shifts the absolute numbers as expected:
 top-1 drops by roughly 6 percentage points for both geometries (Eu
 $64.3 \to 58.3$\,\%; Hy $59.8 \to 53.4$\,\%) while balanced accuracy
-rises sharply (Eu $56.4 \to 65.6$\,\%; Hy $44.5 \to 62.1$\,\%) ---
-but the geometry gap is preserved on every axis we report. Top-1
+rises sharply (Eu $56.4 \to 65.6$\,\%; Hy $44.5 \to 62.1$\,\%).
+The geometry gap, however, is preserved on every axis we report. Top-1
 remains 5\,pp in Euclidean's favour, sibling recall@5 remains 4\,pp
 in hyperbolic's, and class-center / tree-Spearman against the default
 tree shifts by less than a hundredth. The balanced-accuracy gap
@@ -376,8 +376,8 @@ the noise floor.
   Each large dot is a learned style prototype; small dots are a
   600-image sample of validation embeddings. The dashed circle on the
   right marks the Poincar\'e ball boundary at radius $1/\sqrt{c}$.
-  Hyperbolic prototypes settle into a near-boundary ring --- the
-  exponential-volume regime --- while Euclidean prototypes scatter
+  Hyperbolic prototypes settle into a near-boundary ring (the
+  exponential-volume regime), while Euclidean prototypes scatter
   diffusely with no structural pressure. A theoretical prediction
   about hyperbolic embeddings of trees \citep{nickel2017poincare,
   sala2018representation} made directly visible on a real dataset.}
@@ -389,7 +389,7 @@ geometry behaves as the theory predicts. Trained at $d{=}2$ with
 $c{=}3$, the hyperbolic prototypes occupy a ring near the boundary of
 the Poincar\'e disk: the boundary lies at radius
 $1/\sqrt{c} \approx 0.577$, and the prototypes' mean radius is
-$0.561$ with standard deviation $0.013$ across all 27 styles --- they
+$0.561$ with standard deviation $0.013$ across all 27 styles; they
 are all essentially on the boundary. The matching Euclidean run
 spreads prototypes across an unbounded plane (mean radius $2.96$,
 std $0.995$) with no analogous structural pressure. A consequence
@@ -410,7 +410,7 @@ $d$ where this collapse no longer applies.
   columns permuted by a depth-first traversal of the default style
   tree so that hierarchically adjacent styles sit next to each other
   on both axes. Both models concentrate mistakes in near-diagonal
-  blocks --- errors predominantly fall on tree-adjacent styles
+  blocks: errors fall predominantly on tree-adjacent styles
   (Northern\_Renaissance vs.\ Early\_Renaissance,
   Action\_painting vs.\ Abstract\_Expressionism, Synthetic\_Cubism
   vs.\ Cubism). The hyperbolic block structure is visibly softer near
