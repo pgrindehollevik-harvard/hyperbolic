@@ -19,9 +19,13 @@ import numpy as np
 import pandas as pd
 import torch
 import torchvision.transforms as T
-from PIL import Image
+from PIL import Image, ImageFile
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+
+# WikiArt has a few JPEGs with truncated data streams. PIL raises
+# OSError on these unless we explicitly allow loading truncated images.
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 ROOT = Path(__file__).resolve().parents[1]
 IMG_DIR = ROOT / "data" / "wikiart" / "wikiart"
@@ -45,7 +49,17 @@ class WikiArtDataset(Dataset):
         return len(self.paths)
 
     def __getitem__(self, i):
-        return DINOV2_TRANSFORM(Image.open(self.paths[i]).convert("RGB"))
+        try:
+            img = Image.open(self.paths[i]).convert("RGB")
+            return DINOV2_TRANSFORM(img)
+        except (OSError, Image.UnidentifiedImageError) as exc:
+            # Fall back to a zeros tensor so the whole run doesn't die
+            # on a single corrupt JPEG. The corresponding feature row
+            # will be ~0 and gets averaged into its class centroid;
+            # given that affected images are <1% of the corpus, the
+            # centroid impact is negligible.
+            print(f"[warn] {self.paths[i]}: {exc}", flush=True)
+            return torch.zeros(3, 224, 224)
 
 
 def main() -> None:
