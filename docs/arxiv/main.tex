@@ -37,14 +37,15 @@ WikiArt paintings spanning 27 styles, we train two prototype
 classifiers that are identical apart from the geometry of their
 output space ($\mathbb{R}^d$ vs.\ Poincar\'e ball of dimension $d$),
 sweeping embedding dimension, curvature, and the strength $\lambda$
-of a hierarchy-aware regularizer. Across 150 seed-replicated runs we find a single robust effect:
-hyperbolic prototypes preserve local hierarchy --- the structure of
-the nearest-neighbor graph in embedding space --- substantially better
-than matched Euclidean prototypes. Sibling recall@5 against the
-hand-built tree is $0.195$ for hyperbolic vs.\ $0.149$ for Euclidean
-at $d=8$, and the gap survives a redefinition of sibling sets from a
-data-driven empirical tree built from CLIP feature centroids
-($0.416$ vs.\ $0.356$). Aggregated over 18 paired seed-config
+of a hierarchy-aware regularizer. Across 150 seed-replicated runs we
+find a single robust effect: hyperbolic prototypes preserve local
+hierarchy --- the structure of the nearest-neighbor graph in
+embedding space --- substantially better than matched Euclidean
+prototypes. Sibling recall@5 at $d{=}8$ is $0.195$ for hyperbolic
+vs.\ $0.149$ for Euclidean against the hand-built tree, and the gap
+is preserved across two further reference-tree definitions:
+empirical trees built from CLIP and DINOv2 feature centroids
+respectively. Aggregated over 18 paired seed-config
 comparisons the gap is $+8.7$\,pp on sibling recall and $+15.2$\,pp
 on cousin recall (paired-$t$ $p<10^{-4}$, sign agreement $0.94$).
 Calibration matters: a $k$-nearest-neighbor classifier on raw CLIP
@@ -57,14 +58,15 @@ logistic-regression baseline on raw CLIP features ($64.3$\,\% vs.\
 $64.1$\,\%) and outperform hyperbolic by $4$--$6$\,pp; this gap is
 robust to class-imbalance weighting and to the choice of training
 tree. On global tree fidelity, the comparison is metric- and
-reference-dependent: Euclidean has lower mean tree distortion
-($p<10^{-4}$), but the prototype-tree Spearman gap is not
-significantly different from zero across the full sweep ($p=0.68$)
-and reverses against the empirical reference tree. The clean claim
-this paper supports is therefore narrower than ``the geometry
-matters globally'': it is that hyperbolic prototype geometry adds
+reference-dependent and unstable: prototype-tree Spearman is not
+significantly different from zero across the full sweep ($p=0.68$),
+and the small gap that does appear flips sign between empirical
+trees built from CLIP and from DINOv2 feature centroids. The clean
+claim this paper supports is therefore narrower than ``the geometry
+matters globally'': hyperbolic prototype geometry adds
 local-retrieval value over the encoder while Euclidean prototype
-geometry does not.
+geometry does not, and that local advantage is robust to which of
+three reference-tree definitions we use.
 \end{abstract}
 
 \medskip

@@ -32,32 +32,39 @@ matters most, and where the paper makes the smallest claim. Mean
 tree distortion is significantly lower for Euclidean prototypes
 against the default tree ($p<10^{-4}$). Class-center / tree Spearman
 is not significantly different from zero across the full sweep
-($p=0.68$, sign agreement $0.50$) and reverses sign against the
-data-driven empirical reference tree. ``Euclidean prototype distances
-are closer in pairwise rank to the hand-built tree than hyperbolic
-ones'' is therefore an unstable claim, and we explicitly do not make
-it.
+($p=0.68$). Phase~4 reported that the global-Spearman direction
+reverses against a CLIP-derived empirical reference tree; Phase~5
+shows that this reversal does not survive a different encoder
+\citep{oquab2024dinov2}, where Euclidean leads at every $d \geq 4$.
+The CLIP-empirical and DINOv2-empirical trees themselves correlate
+at $0.50$ on pairwise distances, so the encoders see broadly
+similar similarity structure --- but the small global-Spearman gap
+between geometries is unstable across that variation. ``Either
+geometry wins on global tree fidelity'' is therefore not a claim
+this paper supports. By contrast, sibling and cousin recall@5 favour
+hyperbolic on every reference tree we tried (default, CLIP-empirical,
+DINOv2-empirical), with paired-seed $p<10^{-4}$.
 
-What we cannot conclude. We cannot generalize beyond medium-scale,
-Western-canon-heavy WikiArt with a frozen CLIP-ViT-B/16 backbone;
-the local advantage we identify may not survive a fine-tuned encoder
-or a different dataset, especially one where the hierarchy is much
-deeper or wider than 27 leaves. We cannot conclude that the
-hyperbolic geometry does substantive work in the head MLP, since
-only the prototypes live on the manifold. We cannot conclude from
-Phase~4 alone that hyperbolic embeddings are ``closer to the truth''
-than Euclidean ones --- the empirical tree is one construction with
-known biases, and the most direct way to test the claim is to build
-analogous empirical trees from a different encoder
-(e.g., DINOv2) and from a hyperbolic-space linkage.
+What we cannot conclude. We cannot generalise beyond medium-scale,
+Western-canon-heavy WikiArt with a frozen CLIP-ViT-B/16 backbone for
+training; the local advantage we identify may not survive a
+fine-tuned encoder or a different dataset, especially one where the
+hierarchy is much deeper or wider than 27 leaves. We cannot conclude
+that the hyperbolic geometry does substantive work inside the head
+MLP, since only the prototypes live on the manifold.
 
-Three limitations point to natural extensions, listed in
-order of cost-to-payoff. \textit{(i)} A genuinely hyperbolic head
-along the lines of M\"obius layers \citep{ganea2018hyperbolic} would
-let the manifold shape the representation rather than only the
-decision boundary, and is the cheapest way to test whether the
-classification gap closes. \textit{(ii)} An empirical reference tree
-built from a different encoder (DINOv2 or MAE features) would test
-whether Phase~4's geometry comparison is CLIP-specific. \textit{(iii)}
-A learned tree along the lines of \citet{chami2020trees} would close
-the loop by removing the imposed reference altogether.
+Three limitations point to natural extensions, listed in order of
+cost-to-payoff. \textit{(i)} A genuinely hyperbolic head along the
+lines of M\"obius layers \citep{ganea2018hyperbolic} would let the
+manifold shape the representation rather than only the decision
+boundary, and is the cheapest way to test whether the classification
+gap closes. \textit{(ii)} The empirical reference trees in Phases~4
+and~5 are both built in Euclidean space (UPGMA on Euclidean
+distances). Building one in hyperbolic space, or by direct
+tree-learning methods \citep{chami2020trees}, would close the
+remaining circularity. \textit{(iii)} Replication on a deeper
+hierarchy (iNaturalist with WordNet, or a fine-grained subdivision
+of WikiArt's largest classes) would test the limits of the local
+advantage we observe: Khrulkov et al.\ have shown hyperbolic
+embeddings help most where the hierarchy is wide, and the WikiArt
+27-leaf taxonomy is on the shallow end of that spectrum.

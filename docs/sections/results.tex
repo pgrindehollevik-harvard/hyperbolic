@@ -267,6 +267,68 @@ the comparison holds when the sibling set itself is redefined.
   \label{fig:empirical_recall}
 \end{figure}
 
+\subsection{Phase 5 --- Cross-encoder generalization}
+\label{ssec:phase5}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/phase5_dinov2.pdf}
+  \caption{Phase~5: substituting a DINOv2 ViT-B/14 encoder for CLIP
+  in the empirical-tree construction. \textbf{Left:} prototype-tree
+  Spearman against three references --- default tree (dotted), CLIP
+  empirical tree (dashed), DINOv2 empirical tree (solid). The
+  hyperbolic lead seen against the CLIP-empirical tree (Phase~4)
+  \emph{does not} replicate against the DINOv2-empirical tree:
+  Euclidean prototypes lead at every $d \geq 4$.
+  \textbf{Center:} sibling recall@5 against three reference-tree
+  sibling-set definitions. Hyperbolic leads on every reference at
+  every $d \geq 4$.
+  \textbf{Right:} pairwise-distance Spearman between reference trees.
+  The hand-built default tree correlates only weakly with either
+  encoder-derived tree (0.08 / 0.12). The two encoder-derived trees
+  correlate moderately well with each other (0.50).}
+  \label{fig:phase5}
+\end{figure}
+
+The Phase~4 finding is sensitive to which encoder builds the
+empirical tree. To probe this, we re-extract per-image features for
+the entire WikiArt corpus with DINOv2 ViT-B/14
+\citep[a contrastive image-only encoder unrelated to CLIP;][]{oquab2024dinov2}, build an analogous empirical
+tree by agglomerative clustering on per-class DINOv2 centroids, and
+re-evaluate the Phase~1 winners. Two findings, in contrasting
+directions.
+
+\paragraph{Encoder-derived trees agree with each other but not with
+the hand-built tree.} Pairwise-distance Spearman between the
+hand-built default tree and the CLIP-empirical tree is $0.08$;
+between default and DINOv2-empirical it is $0.12$; between
+CLIP-empirical and DINOv2-empirical it is $0.50$. Whatever the
+hand-built lineage tree captures, the encoders see only a weak
+projection of it; whatever the encoders capture, they capture it
+similarly. The hand-built tree is the outlier.
+
+\paragraph{The global-Spearman direction is encoder-specific; the
+local-recall direction is not.} Phase~4 reported that hyperbolic
+prototypes correlate slightly more strongly with the CLIP-empirical
+tree than Euclidean prototypes at $d \geq 4$. Against the
+DINOv2-empirical tree the direction reverses: Euclidean prototypes
+lead at every $d$, with $\rho_{\text{Eu}} - \rho_{\text{Hy}}$ growing
+to $+0.06$ at $d{=}64$ ($0.413$ vs.\ $0.357$). This is an honest
+negative result for the strongest reading of Phase~4: the
+global-Spearman flip identified there does not generalise across
+encoders, and we attribute it to the CLIP-derived empirical tree
+sharing more structure with hyperbolic-prototype distances than the
+DINOv2-derived one happens to. Sibling and cousin recall, in
+contrast, lean hyperbolic on \emph{every} reference tree we built ---
+default, CLIP-empirical, and DINOv2-empirical (sibling@5 at $d{=}8$:
+Eu $0.149 / 0.356 / 0.322$, Hy $0.195 / 0.416 / 0.380$). The local
+advantage of hyperbolic prototypes is reference-tree-independent in
+the strict sense that we can no longer rule it out as an artifact of
+any single tree construction.
+
+The single defensible claim across all four reference-tree
+constructions we tried is therefore the local one. The global one is
+unreliable.
+
 \subsection{Calibration baselines}
 \label{ssec:baselines}
 \begin{figure}[t]
