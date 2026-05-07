@@ -1,7 +1,7 @@
 """
 Helpers for analyzing sweep results.
 
-Used by `notebooks/ms4_main.ipynb` and `scripts/make_figures.py`. Keeps the
+Used by `notebooks/03_main.ipynb` and `scripts/make_figures.py`. Keeps the
 notebook's analysis cells short and the figure-generation deterministic.
 """
 

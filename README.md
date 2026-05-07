@@ -3,7 +3,7 @@
 > **TL;DR.** Hyperbolic prototype embeddings preserve *local* hierarchy on artistic-style data more faithfully than Euclidean embeddings of matched dimension. The local advantage is real and robust across reference trees, regularizer strengths, embedding dimensions, and class-imbalance handling. The classification gap in Euclidean's favour is also robust — but a logistic-regression baseline on raw CLIP features matches the Euclidean prototype, suggesting Euclidean prototype geometry adds nothing over the encoder. Hyperbolic prototype geometry adds local-retrieval value the encoder doesn't already provide.
 
 📄 **Paper:** [`docs/main.pdf`](docs/main.pdf)
-🧪 **End-to-end notebook:** [`notebooks/ms4_main.ipynb`](notebooks/ms4_main.ipynb)
+🧪 **End-to-end notebook:** [`notebooks/03_main.ipynb`](notebooks/03_main.ipynb)
 📊 **Sweep CSV (every config × every metric):** [`notebooks/sweep_results.csv`](notebooks/sweep_results.csv)
 
 <p align="center">
@@ -89,9 +89,9 @@ scripts/
   make_figures.py            ← regenerate docs/figures/* from sweep.csv
 
 notebooks/
-  ms2_data_wrangling.ipynb   ← data EDA
-  ms3.ipynb                  ← cross-entropy baseline + pipeline
-  ms4_main.ipynb             ← end-to-end reference run, sweep
+  01_data_wrangling.ipynb    ← data EDA
+  02_baseline.ipynb          ← cross-entropy baseline + pipeline
+  03_main.ipynb              ← end-to-end reference run, sweep
                                analysis, qualitative figures
   sweep_results.csv          ← 150-row sweep snapshot
 
@@ -117,7 +117,7 @@ python scripts/make_figures.py                    # regenerate docs/figures/*
 
 The sweep is resumable via a single `data/runs/sweep.csv`. Each row is one (geometry, dim, curvature, λ, training tree, seed) configuration plus every evaluation metric. If a run dies halfway, re-running picks up where it left off.
 
-For a single-cell reference run, open [`notebooks/ms4_main.ipynb`](notebooks/ms4_main.ipynb) and choose **Restart Kernel + Run All**. Section 4 trains a single Euclidean and a single hyperbolic model from scratch (~1 min) so the executable pipeline is verified; later sections load `notebooks/sweep_results.csv` and produce all the report figures.
+For a single-cell reference run, open [`notebooks/03_main.ipynb`](notebooks/03_main.ipynb) and choose **Restart Kernel + Run All**. Section 4 trains a single Euclidean and a single hyperbolic model from scratch (~1 min) so the executable pipeline is verified; later sections load `notebooks/sweep_results.csv` and produce all the report figures.
 
 ## Setup
 
