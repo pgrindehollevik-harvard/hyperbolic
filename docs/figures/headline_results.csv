@@ -1,11 +1,10 @@
-metric,euclidean,hyperbolic
-Top-1,0.659 ± 0.003,0.606 ± 0.002
-Top-5,0.959 ± 0.001,0.935 ± 0.001
-Balanced acc.,0.554 ± 0.002,0.463 ± 0.004
-Class-center / tree Spearman,0.350 ± 0.027,0.242 ± 0.002
-Avg. tree distortion,1.742 ± 0.009,1.861 ± 0.003
-Worst tree distortion,4.733 ± 0.253,7.147 ± 0.076
-Dendrogram F1,0.034 ± 0.030,0.000 ± 0.000
-Sibling recall@5,0.136 ± 0.003,0.188 ± 0.004
-Cousin recall@5,0.249 ± 0.003,0.296 ± 0.005
-Fréchet (Cubism) acc.,0.927 ± 0.029,0.913 ± 0.021
+metric,euclidean,hyperbolic,logistic-on-CLIP,kNN-5-on-CLIP
+Top-1,0.659 ± 0.003,0.606 ± 0.002,0.641,0.635
+Top-5,0.959 ± 0.001,0.935 ± 0.001,—,—
+Balanced acc.,0.554 ± 0.002,0.463 ± 0.004,0.611,0.588
+Class-center / tree Spearman,0.350 ± 0.027,0.242 ± 0.002,—,—
+Avg. tree distortion,1.742 ± 0.009,1.861 ± 0.003,—,—
+Worst tree distortion,4.733 ± 0.253,7.147 ± 0.076,—,—
+Dendrogram F1,0.034 ± 0.030,0.000 ± 0.000,—,—
+Sibling recall@5,0.136 ± 0.003,0.188 ± 0.004,—,0.160
+Cousin recall@5,0.249 ± 0.003,0.296 ± 0.005,—,0.277

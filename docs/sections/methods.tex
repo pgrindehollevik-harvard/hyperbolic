@@ -86,11 +86,15 @@ useful along three distinct axes, and we report metrics for each.
 accuracy. \emph{Global tree fidelity} is measured by the Spearman
 correlation between the learned prototype distance matrix and the
 tree distance matrix, together with mean and worst-case
-multiplicative distortion. \emph{Local hierarchy preservation} is
-measured by sibling and cousin recall@$k$ among the $k$ nearest
-neighbors of each validation embedding, for $k \in \{5, 10\}$. We
-also include a hierarchical-clustering check (dendrogram-cluster F1
-against the default tree) and a Fr\'echet-mean probe on Cubism that
-tests whether the average of several Cubist embeddings remains
-nearest to the Cubist prototype. Code, sweep configurations, and the
-exact metric implementations are at the linked repository.
+multiplicative distortion, and dendrogram-cluster F1 against the
+default tree. \emph{Local hierarchy preservation} is measured by
+sibling and cousin recall@$k$ among the $k$ nearest neighbors of
+each validation embedding, for $k \in \{5, 10\}$. To test whether
+the local recall metrics are themselves an artifact of the default
+tree's sibling-set definition, we also recompute recall@5 with
+sibling and cousin sets derived from the empirical tree's binary
+linkage (Section~\ref{ssec:phase4}). Significance comparisons across
+seeds use paired-$t$ tests on the 18 (dim, seed) pairs of the
+Phase~1 sweep, with hyperbolic configurations selected at the best
+curvature per pair. Code, sweep configurations, and the exact metric
+implementations are at the linked repository.

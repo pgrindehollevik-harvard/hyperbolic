@@ -37,25 +37,34 @@ WikiArt paintings spanning 27 styles, we train two prototype
 classifiers that are identical apart from the geometry of their
 output space ($\mathbb{R}^d$ vs.\ Poincar\'e ball of dimension $d$),
 sweeping embedding dimension, curvature, and the strength $\lambda$
-of a hierarchy-aware regularizer. Across 150 seed-replicated runs the local advantage of hyperbolic
-embeddings is real, robust, and growing with embedding dimension:
-hyperbolic prototype embeddings recover sibling and cousin
-neighborhoods 4--5 percentage points more faithfully (recall@5) than
-matched Euclidean embeddings, the gap widens with $d$, the
-hierarchy-aware loss does not erase it, and it is independent of
-which of three reference trees we use. The picture for global tree
-fidelity is more delicate. Against the hand-built reference tree,
-Euclidean prototypes correlate slightly better than hyperbolic ones
-with tree distances; but the hand-built tree correlates only weakly
-($\rho = 0.08$) with a data-driven empirical tree built from
-training-set CLIP centroids, and against that empirical tree the
-global advantage flips: hyperbolic prototypes align more closely at
-every $d \geq 4$. The cross-entropy classification gap remains in
-Euclidean's favour. We recommend treating geometry choice as a
-clear local advantage for hyperbolic embeddings plus a clear
-classification-accuracy advantage for Euclidean embeddings, while
-remaining cautious about global-tree-fidelity claims that depend on
-a specific hand-built reference.
+of a hierarchy-aware regularizer. Across 150 seed-replicated runs we find a single robust effect:
+hyperbolic prototypes preserve local hierarchy --- the structure of
+the nearest-neighbor graph in embedding space --- substantially better
+than matched Euclidean prototypes. Sibling recall@5 against the
+hand-built tree is $0.195$ for hyperbolic vs.\ $0.149$ for Euclidean
+at $d=8$, and the gap survives a redefinition of sibling sets from a
+data-driven empirical tree built from CLIP feature centroids
+($0.416$ vs.\ $0.356$). Aggregated over 18 paired seed-config
+comparisons the gap is $+8.7$\,pp on sibling recall and $+15.2$\,pp
+on cousin recall (paired-$t$ $p<10^{-4}$, sign agreement $0.94$).
+Calibration matters: a $k$-nearest-neighbor classifier on raw CLIP
+features achieves $0.160 / 0.366$ sibling recall (default /
+empirical), essentially tied with the Euclidean prototype's
+$0.149 / 0.356$. The hyperbolic prototype is the only model that
+meaningfully improves over $k$-NN-on-CLIP on this metric. On
+classification accuracy, by contrast, Euclidean prototypes match a
+logistic-regression baseline on raw CLIP features ($64.3$\,\% vs.\
+$64.1$\,\%) and outperform hyperbolic by $4$--$6$\,pp; this gap is
+robust to class-imbalance weighting and to the choice of training
+tree. On global tree fidelity, the comparison is metric- and
+reference-dependent: Euclidean has lower mean tree distortion
+($p<10^{-4}$), but the prototype-tree Spearman gap is not
+significantly different from zero across the full sweep ($p=0.68$)
+and reverses against the empirical reference tree. The clean claim
+this paper supports is therefore narrower than ``the geometry
+matters globally'': it is that hyperbolic prototype geometry adds
+local-retrieval value over the encoder while Euclidean prototype
+geometry does not.
 \end{abstract}
 
 \medskip

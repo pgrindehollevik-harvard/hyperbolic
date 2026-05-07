@@ -111,13 +111,41 @@ def make_headline_table(df) -> None:
         return
     formatted = format_headline_for_report(table)
 
-    # Save both the formatted markdown-friendly version (as CSV) and a LaTeX
-    # tabular block for direct \input{} into report/main.tex.
+    # Add baseline columns if available (logistic-on-CLIP, kNN-on-CLIP).
+    baselines_path = REPO_ROOT / "data" / "runs" / "baselines.csv"
+    if baselines_path.exists():
+        import pandas as pd
+        bl = pd.read_csv(baselines_path).set_index("method")
+        # Map column names
+        col_map = {
+            "Top-1": "top1_accuracy",
+            "Balanced acc.": "balanced_accuracy",
+            "Sibling recall@5": "sibling_recall_at_5_default",
+            "Cousin recall@5": "cousin_recall_at_5_default",
+        }
+        for label, source_key in col_map.items():
+            if label in formatted.index:
+                for method, col_name in [
+                    ("logistic-regression-on-CLIP", "logistic-on-CLIP"),
+                    ("kNN-5-on-CLIP", "kNN-5-on-CLIP"),
+                ]:
+                    if method in bl.index and source_key in bl.columns:
+                        val = bl.loc[method, source_key]
+                        if pd.notna(val):
+                            formatted.at[label, col_name] = f"{float(val):.3f}"
+                        else:
+                            formatted.at[label, col_name] = "—"
+        # Fill missing baseline cells with em-dash
+        for col in ["logistic-on-CLIP", "kNN-5-on-CLIP"]:
+            if col in formatted.columns:
+                formatted[col] = formatted[col].fillna("—")
+
     csv_out = FIG_DIR / "headline_results.csv"
     formatted.to_csv(csv_out)
     print(f"[figures] wrote {csv_out.relative_to(REPO_ROOT)}")
 
-    latex = formatted.to_latex(escape=True, column_format="lcc")
+    n_cols = len(formatted.columns)
+    latex = formatted.to_latex(escape=True, column_format="l" + "c" * n_cols)
     tex_out = FIG_DIR / "headline_results.tex"
     tex_out.write_text(latex)
     print(f"[figures] wrote {tex_out.relative_to(REPO_ROOT)}")

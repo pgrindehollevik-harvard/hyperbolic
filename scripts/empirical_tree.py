@@ -103,6 +103,47 @@ def build_empirical_tree(
     return linkage_to_tree_distance_matrix(Z, n=NUM_CLASSES)
 
 
+def build_empirical_tree_from_features(
+    features_path: Path | str,
+    method: str = "average",
+) -> np.ndarray:
+    """Build an empirical tree from a custom feature file.
+
+    Used to construct a tree from a non-CLIP encoder (e.g.\\ DINOv2).
+    Reuses the train-split labels from `data/features/index.csv` and
+    the train-split CSV in `data/wikiart_csvs/style_train.csv` to map
+    rows to class labels, then proceeds as `build_empirical_tree`.
+    """
+    import pandas as pd
+    import re
+
+    REPO_ROOT = Path(__file__).resolve().parents[1]
+    INDEX_PATH = REPO_ROOT / "data" / "features" / "index.csv"
+    SPLIT_DIR = REPO_ROOT / "data" / "wikiart_csvs"
+
+    def _ascii_key(p: str) -> str:
+        return re.sub(r"[^A-Za-z0-9/_.-]", "", p)
+
+    features = np.load(features_path).astype(np.float32)
+    index = pd.read_csv(INDEX_PATH)
+    index["key"] = index["path"].map(_ascii_key)
+    key_to_row = dict(zip(index["key"], index["row_idx"]))
+
+    split_df = pd.read_csv(
+        SPLIT_DIR / "style_train.csv", header=None, names=["path", "label"]
+    )
+    split_df["key"] = split_df["path"].map(_ascii_key)
+    split_df["row_idx"] = split_df["key"].map(key_to_row)
+    split_df = split_df.dropna(subset=["row_idx"]).reset_index(drop=True)
+    rows = split_df["row_idx"].to_numpy(dtype=np.int64)
+    labels = split_df["label"].to_numpy(dtype=np.int64)
+    feats = features[rows]
+
+    centers = class_centroids(feats, labels, n_classes=NUM_CLASSES)
+    Z = linkage(centers, method=method, metric="euclidean")
+    return linkage_to_tree_distance_matrix(Z, n=NUM_CLASSES)
+
+
 if __name__ == "__main__":
     T = build_empirical_tree()
     print("shape:", T.shape)
