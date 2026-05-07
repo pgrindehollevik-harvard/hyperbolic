@@ -1,8 +1,8 @@
 \section{Broader Impact}
 \label{sec:impact}
 
-The system itself is small --- a 27-way classifier on cached features
---- but a few of its design choices have implications worth being
+The system itself is small (a 27-way classifier on cached features),
+but a few of its design choices have implications worth being
 explicit about.
 
 The default ground-truth tree is built from a Western, lineage-based
@@ -18,8 +18,8 @@ contains 27 styles but only one (Ukiyo-e) sits outside the
 European-and-American canon, and East Asian ink-painting traditions
 that span centuries are collapsed into that single label. A retrieval
 system trained on this data will under-rank non-Western works for
-ambiguous queries. Hyperbolic geometry --- which we have shown tightens
-local neighborhoods --- could compound the effect by making those
+ambiguous queries. Hyperbolic geometry, which we have shown tightens
+local neighborhoods, could compound the effect by making those
 already-tight neighborhoods more confident. Anyone deploying
 embeddings of this kind should publish that limitation alongside the
 model, not bury it.
