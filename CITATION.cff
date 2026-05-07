@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this code or build on this analysis, please cite the accompanying paper."
+title: "Hyperbolic Embeddings for Hierarchical Style Representation: A Local-vs-Global Trade-off"
+authors:
+  - family-names: Flo
+    given-names: Peter
+    affiliation: Harvard University
+    email: pgrindehollevik@g.harvard.edu
+  - family-names: Grossmann
+    given-names: Luca
+    affiliation: Harvard University
+    email: lgrossmann@g.harvard.edu
+repository-code: "https://github.com/pgrindehollevik-harvard/hyperbolic"
+license: MIT
+type: software

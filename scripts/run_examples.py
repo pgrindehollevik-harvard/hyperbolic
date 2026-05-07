@@ -1,3 +1,8 @@
+"""Smoke test: train one Euclidean and one hyperbolic model at d=8.
+
+Useful as a quick end-to-end check that the training pipeline works after
+a fresh clone. For the full sweep see scripts/sweep.py.
+"""
 import sys
 from pathlib import Path
 

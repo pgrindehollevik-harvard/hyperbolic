@@ -178,4 +178,21 @@ Each pair-distance vector is divided by its own mean before the squared differen
 
 **Peter Flo (Grinde-Hollevik)** · [pgrindehollevik@g.harvard.edu](mailto:pgrindehollevik@g.harvard.edu) · [www.pflo.org](https://www.pflo.org)
 **Luca Grossmann**
-**Valerie Wang**
+
+## Citation
+
+If you use this code or build on this analysis, please cite the accompanying paper:
+
+```bibtex
+@misc{flo2026hyperbolic,
+  title  = {Hyperbolic Embeddings for Hierarchical Style Representation:
+            A Local-vs-Global Trade-off},
+  author = {Flo, Peter and Grossmann, Luca},
+  year   = {2026},
+  note   = {Code: \url{https://github.com/pgrindehollevik-harvard/hyperbolic}},
+}
+```
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).
