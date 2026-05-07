@@ -1,49 +1,73 @@
+% Hyperbolic Embeddings for Hierarchical Style Representation
+% Build: pdflatex main.tex; bibtex main; pdflatex main.tex; pdflatex main.tex
 \documentclass[11pt]{article}
-\newif\ifarxiv
-\arxivfalse  % course version
 \input{preamble}
 
-\title{%
-  \textbf{Hyperbolic Embeddings for Hierarchical Style Representation}\\[0.4em]
-  \large Canvas Project \#150\\[0.2em]
-  \large COMPSCI 209B --- Spring 2026
-}
+\title{\textbf{Hyperbolic Embeddings for Hierarchical Style
+  Representation:\\ A Local-vs-Global Trade-off}}
+
 \author{%
-  Peter Flo \and Luca Grossmann \and Valerie Wang
+  Peter Flo \and Luca Grossmann \and Valerie Wang \\
+  Harvard University\\
+  \texttt{\{pgrindehollevik,lgrossmann,vwang\}@g.harvard.edu}\\[0.6em]
+  \href{https://github.com/pgrindehollevik-harvard/hyperbolic}{%
+    \nolinkurl{github.com/pgrindehollevik-harvard/hyperbolic}}
 }
-\date{}
+\date{\today}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Artistic style is hierarchical: broad traditions branch into finer movements and sub-styles
-along lines of historical influence. Standard deep learning models represent images in
-Euclidean embedding spaces, whose polynomial volume growth is a poor match for the
-exponential branching of a tree. Hyperbolic geometry, and in particular the Poincar\'{e}
-ball, offers exponential volume growth and is theoretically better suited to embedding
-tree-like structures with low distortion. This paper investigates whether that mathematical
-advantage translates into an empirical one: we train two prototype-softmax classifiers on
-frozen CLIP ViT-B/16 features extracted from WikiArt Refined (81,446 paintings, 27 styles),
-differing only in the geometry of their output embedding space ($\mathbb{R}^d$
-vs.\ Poincar\'{e} ball of dimension $d$), and compare them on both classification accuracy
-and hierarchy preservation metrics derived from a hand crafted art historical tree.
-We find a single robust effect: hyperbolic prototype geometry preserves
-local hierarchy --- the structure of an embedding's nearest-neighbor graph
---- substantially better than matched Euclidean prototype geometry
-($+8.7$\,pp sibling recall@5, $+15.2$\,pp cousin recall@5 in paired-seed
-tests, $p<10^{-4}$), and the gap survives a redefinition of sibling sets
-from a data-driven empirical tree. Calibration matters: a $k$-NN-on-CLIP
-baseline matches the Euclidean prototype on retrieval, while hyperbolic is
-the only model that beats the baseline meaningfully. On classification
-accuracy, Euclidean leads hyperbolic by $4$--$6$\,pp but does not exceed
-a logistic-regression head on the same input features. On global tree
-fidelity, the geometry comparison is reference-dependent and we explicitly
-do not claim a winner. The hierarchy-aware regularizer improves
-both geometries on global tree metrics without flipping any of these
-relations.
+Hyperbolic geometry is theoretically better suited than Euclidean
+geometry to representing tree-like data: the volume of a ball at
+radius $r$ grows exponentially in the Poincar\'e model and only
+polynomially in $\mathbb{R}^d$, matching the way a tree's leaf count
+grows with depth. We test whether this mathematical advantage
+translates into a practical one for representing the hierarchy of
+artistic styles. Using frozen CLIP ViT-B/16 features over 81{,}446
+WikiArt paintings spanning 27 styles, we train two prototype
+classifiers that are identical apart from the geometry of their
+output space ($\mathbb{R}^d$ vs.\ Poincar\'e ball of dimension $d$),
+sweeping embedding dimension, curvature, and the strength $\lambda$
+of a hierarchy-aware regularizer. Across 150 seed-replicated runs we
+find a single robust effect: hyperbolic prototypes preserve local
+hierarchy --- the structure of the nearest-neighbor graph in
+embedding space --- substantially better than matched Euclidean
+prototypes. Sibling recall@5 at $d{=}8$ is $0.195$ for hyperbolic
+vs.\ $0.149$ for Euclidean against the hand-built tree, and the gap
+is preserved across two further reference-tree definitions:
+empirical trees built from CLIP and DINOv2 feature centroids
+respectively. Aggregated over 18 paired seed-config
+comparisons the gap is $+8.7$\,pp on sibling recall and $+15.2$\,pp
+on cousin recall (paired-$t$ $p<10^{-4}$, sign agreement $0.94$).
+Calibration matters: a $k$-nearest-neighbor classifier on raw CLIP
+features achieves $0.160 / 0.366$ sibling recall (default /
+empirical), essentially tied with the Euclidean prototype's
+$0.149 / 0.356$. The hyperbolic prototype is the only model that
+meaningfully improves over $k$-NN-on-CLIP on this metric. On
+classification accuracy, by contrast, Euclidean prototypes match a
+logistic-regression baseline on raw CLIP features ($64.3$\,\% vs.\
+$64.1$\,\%) and outperform hyperbolic by $4$--$6$\,pp; this gap is
+robust to class-imbalance weighting and to the choice of training
+tree. On global tree fidelity, the comparison is metric- and
+reference-dependent and unstable: prototype-tree Spearman is not
+significantly different from zero across the full sweep ($p=0.68$),
+and the small gap that does appear flips sign between empirical
+trees built from CLIP and from DINOv2 feature centroids. The clean
+claim this paper supports is therefore narrower than ``the geometry
+matters globally'': hyperbolic prototype geometry adds
+local-retrieval value over the encoder while Euclidean prototype
+geometry does not, and that local advantage is robust to which of
+three reference-tree definitions we use.
 \end{abstract}
+
+\medskip
+
+\noindent\textbf{Code, sweep CSVs, and figures:}
+\href{https://github.com/pgrindehollevik-harvard/hyperbolic}%
+{\nolinkurl{github.com/pgrindehollevik-harvard/hyperbolic}}.
 
 \tableofcontents
 \newpage

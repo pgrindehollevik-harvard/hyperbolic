@@ -835,7 +835,7 @@ def run_evaluation(
     geometry: str | None = None,
     curvature: float | None = None,
 ) -> dict:
-    """Run the full MS3/MS4 evaluation suite on a checkpoint.
+    """Run the full evaluation suite on a checkpoint.
 
     Returns a flat metrics dict suitable for a sweep CSV row. When
     ``save_artifacts`` is True (default), also dumps CSVs/plots to ``output_dir``.

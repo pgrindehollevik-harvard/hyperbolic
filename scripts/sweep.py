@@ -1,5 +1,5 @@
 """
-Grid-search runner for MS4.
+Grid-search runner.
 
 Iterates a list of training configs, trains each, evaluates each, appends a row
 to data/runs/sweep.csv. Resumable — re-running skips configs whose hash is
@@ -212,7 +212,7 @@ def phase1_space() -> list[dict]:
 def phase2_space() -> list[dict]:
     """Phase 2: hierarchy-aware loss, sweep λ at the d=8 / c=1 sweet spot.
 
-    We use d=8 because it's where MS3 reported results; if hyperbolic catches up
+    We use d=8 because it's where the cross-entropy baseline reported results; if hyperbolic catches up
     here, that's the cleanest comparison. We also test d=16 and d=32 with the
     best λ later (planned in a separate small sweep).
     """

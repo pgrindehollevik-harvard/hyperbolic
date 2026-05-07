@@ -2,7 +2,7 @@
 WikiArt style hierarchies and tree-distance matrices.
 
 Three hierarchies are provided:
-- "default": the art-history lineage tree used in MS3 (Renaissance → Baroque → ...).
+- "default": the art-history lineage tree (Renaissance → Baroque → ...).
 - "flat": every leaf is a direct child of Root. Acts as a null/control: the
   tree-distance matrix becomes constant off-diagonal, so no embedding can do
   better than chance on hierarchy-aware metrics. Useful for confirming our
