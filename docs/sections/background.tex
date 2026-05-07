@@ -27,8 +27,8 @@ Hyperbolic image embeddings have been shown to help on few-shot
 classification and on retrieval-style metrics in
 \citet{khrulkov2020hyperbolic}, while reportedly providing little or
 no improvement on standard supervised classification accuracy. This
-asymmetry --- helps with neighborhood structure, doesn't help with
-top-1 --- is directly relevant to the local-vs-classification split
+asymmetry, where it helps with neighborhood structure but not with
+top-1, is directly relevant to the local-vs-classification split
 we observe. It remains open, however, whether the advantage holds
 for embeddings supervised against a hand-built hierarchy. We explore
 this through a sweep over curvature and dimension against a
