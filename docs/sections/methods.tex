@@ -12,8 +12,8 @@ Poincar\'e ball. A prototype classifier with one learnable point per
 style turns the embedding into 27-way logits via $-d(z, p_k)$, where
 $d(\cdot,\cdot)$ is the Euclidean or Poincar\'e distance. Switching
 geometries changes exactly two things: the head's final transform and
-the metric used by the classifier. Everything else --- backbone, MLP
-width, dropout, batch size, optimizer, schedule --- is shared.
+the metric used by the classifier. Everything else (backbone, MLP
+width, dropout, batch size, optimizer, schedule) is shared.
 
 \paragraph{Geometry, distance, optimization.} The Poincar\'e distance
 with curvature $c > 0$ is
@@ -25,7 +25,7 @@ with curvature $c > 0$ is
 which diverges as either point approaches the boundary at radius
 $1/\sqrt{c}$. A standard linear layer does not preserve the ball,
 which rules out a parametric softmax head on top of a hyperbolic
-embedding. The prototype classifier is the natural alternative: its
+embedding. A prototype classifier provides an alternative: its
 logits are distances, which the geometry already provides. Adam
 optimizes the MLP head; Riemannian Adam from \texttt{geoopt}
 \citep{kochurov2020geoopt} optimizes the hyperbolic prototypes,
@@ -34,7 +34,7 @@ ball.
 
 \paragraph{Hierarchy-aware loss.} \msthreeposs{} approach used the
 hand-built tree only at evaluation time and trained with plain
-cross-entropy --- the standard setup in the hyperbolic-image literature
+cross-entropy, the standard setup in the hyperbolic-image literature
 \citep{khrulkov2020hyperbolic}. Cross-entropy on prototypes requires
 class separability but does not require the prototype layout to match
 the tree, so any failure of either geometry on tree-derived metrics is
@@ -54,8 +54,8 @@ loss only constrains the \emph{shape} of the prototype distance matrix
 rather than its absolute scale. The geometry is free to pick the scale
 that classification likes. $\lambda = 0$ recovers \msthree{} exactly. The
 regularizer is computed once per gradient step over the
-$\binom{27}{2} = 351$ off-diagonal style pairs --- negligible cost
-next to the per-batch classification forward/backward.
+$\binom{27}{2} = 351$ off-diagonal style pairs, a small cost
+relative to the per-batch classification forward/backward.
 
 \paragraph{Ground-truth trees.} WikiArt does not ship a hierarchy, so
 we build one. The default tree follows standard art-history lineage:
@@ -65,7 +65,7 @@ full structure is in Appendix~\ref{app:tree}). Because no single tree
 is canonical, Phase~3 also retrains against two alternatives: a
 \emph{chronological} grouping by century (Renaissance / Baroque-Rococo
 / 19th c.\ / Early 20th c.\ / Modern / Non-Western) and a \emph{flat}
-tree where every style is a direct child of the root --- a deliberate
+tree where every style is a direct child of the root, a deliberate
 null whose distance matrix is constant off-diagonal, so any
 hierarchy-respecting metric must score it near chance.
 
