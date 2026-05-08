@@ -1,0 +1,24 @@
+\section*{Broader impact}
+\label{sec:impact}
+
+The system itself is small (a 27-way classifier on cached features),
+but a few of its design choices have implications worth being explicit
+about. The default reference tree is built from a Western,
+lineage-based art-history canon. Every metric in this paper that
+mentions ``the hierarchy'' is anchored to that taxonomy, which is
+implicitly endorsed by anyone using the numbers. Our tree-variant
+experiments are partial mitigation: they document how much each
+conclusion depends on the choice of tree. A deployment in a museum or
+classroom should treat the tree as configuration, not as a constant.
+WikiArt is heavily biased toward European painting; the corpus has
+27 styles but only one (Ukiyo-e) sits outside the European-and-American
+canon, and East Asian ink-painting traditions that span centuries are
+collapsed into that single label. A retrieval system trained on this
+data will under-rank non-Western works for ambiguous queries.
+Hyperbolic geometry, which tightens local neighborhoods, could
+compound the effect by making those already-tight neighborhoods more
+confident. We therefore do not recommend deploying
+hyperbolic style embeddings for attribution or authentication tasks
+without expert human review: $50$--$65\%$ top-1 accuracy over $27$
+well-known styles is far below the threshold any serious provenance,
+insurance, or legal decision should require.

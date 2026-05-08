@@ -1,0 +1,57 @@
+\section{Discussion}
+\label{sec:conclusion}
+
+The clean finding is that, in our tree-regularized prototype model
+on a real hierarchical-classification problem, the latent manifold
+has a local effect on tree fidelity even when its global effect is
+unstable. Hyperbolic prototype geometry is the only one of
+our trained models that meaningfully improves on the frozen encoder
+for local hierarchy preservation. Sibling recall@5 at $d{=}8$ is
+$0.195$ for hyperbolic, $0.149$ for Euclidean, and $0.160$ for
+$k$-NN-5 on raw CLIP features: the Euclidean fit is tied with the
+encoder; the hyperbolic fit improves on it by
+$3.5$\,pp. The advantage holds when sibling sets are redefined from
+data-driven empirical trees built from CLIP or DINOv2 features, and
+aggregates to $+8.7$\,pp on sibling and $+15.2$\,pp on cousin recall
+over the full dimension sweep with paired-$t$ $p<10^{-4}$.
+
+The classification gap is real but uninformative about geometry. A
+logistic-regression head on raw CLIP features achieves $64.1\%$
+top-1, which the Euclidean fit matches at $d{=}8$ ($64.3\%$) and
+the hyperbolic fit underperforms by $4$--$6$\,pp. Neither fit is doing meaningful
+classification work that a linear head on the same features cannot;
+the difference between the two fits on this axis is best read as
+``Euclidean prototype distances do not distort classification beyond
+what the encoder already supports, while hyperbolic prototype
+distances do.''
+
+The global tree-fidelity comparison is the place where careful
+framing matters most. Mean tree distortion favours Euclidean
+significantly against the default tree; class-center / tree Spearman
+is not significantly different from zero across the sweep
+($p=0.68$); the small global-Spearman gap reverses sign between
+empirical reference trees built from CLIP and from DINOv2 feature
+centroids. ``Either geometry wins on global tree fidelity'' is not a
+claim our experiments support. Sibling and cousin recall favour
+hyperbolic on every reference tree we tried.
+
+\paragraph{Limitations.} We cannot generalise beyond medium-scale,
+Western-canon-heavy WikiArt with a frozen CLIP-ViT-B/16 encoder for
+training; the local advantage we identify may not survive a
+fine-tuned encoder or a hierarchy substantially deeper than the
+$27$-leaf taxonomy used here. We cannot conclude that the hyperbolic
+geometry does substantive work inside the head MLP, since only the
+prototypes live on the manifold.
+
+\paragraph{Extensions.} Three natural follow-ups in increasing cost.
+A genuinely hyperbolic head along the lines of M\"obius layers
+\citep{ganea2018hyperbolic} would let the manifold shape the
+representation rather than only the decision boundary, and is the
+cheapest test of whether the classification gap closes. The
+empirical reference trees in this paper are built in Euclidean space
+from encoder features. Building one in hyperbolic space, or by direct
+tree-learning methods \citep{chami2020trees}, would close a
+remaining circularity. Replication on a deeper hierarchy
+(iNaturalist with WordNet, or a fine-grained subdivision of
+WikiArt's largest classes) would test the limits of the local
+advantage we observe.

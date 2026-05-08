@@ -1,0 +1,97 @@
+\section{Introduction}
+\label{sec:intro}
+
+Many real-world classification problems carry an externally specified
+hierarchy over class labels: artistic-style movements branch into one
+another \citep{tan2019wikiart}, biological taxa nest into clades, and
+ontologies of products, diseases, and documents are organised as
+trees. A natural way to fold that hierarchy into a probabilistic
+classification model is to add a tree-structured regularizer to the
+layout of class-conditional parameters. We study the simplest version
+of this: a prototype classifier whose class-conditional likelihood is
+a softmax over distance-to-prototype, with a regularizer on the
+matrix of pairwise prototype distances pulling it toward the
+tree-distance matrix. The fitted classifier is then a balance between
+a class-likelihood term (paintings of style $k$ should be close to
+prototype $\mathbf{p}_k$) and a tree-shape term (prototypes
+themselves should respect the hierarchy).
+
+The choice of latent manifold for the prototypes is the question this
+paper investigates. Forcing a tree's exponentially-growing leaf count
+into Euclidean $\mathbb{R}^d$, whose ball volume grows only
+polynomially in radius, induces unavoidable distortion of pairwise
+distances; this distortion has been characterised analytically and
+shown to drop sharply on the Poincar\'e ball $\mathbb{B}^d_c$, whose
+own exponential volume growth matches a tree's
+\citep{nickel2017poincare,sala2018representation}. In our model, the
+tree-structured regularizer is a function of pairwise prototype
+distances and should therefore be cheaper to satisfy on the
+hyperbolic manifold than on the Euclidean one without distorting the
+class-conditional likelihood. Whether that geometric advantage
+realises in practice on a real hierarchical-classification problem is
+what we test.
+
+We instantiate the question on WikiArt-Refined \citep{tan2019wikiart},
+a 27-style 81{,}446-painting corpus where the class hierarchy
+(Renaissance branches into Baroque, Baroque into Rococo, Rococo into
+Romanticism, on into Impressionism and Cubism) is part of the domain
+and was hand-built from standard art-history references. Frozen
+CLIP ViT-B/16 features \citep{radford2021clip} feed an MLP head and a
+prototype classifier; the manifold of the classifier output is the
+only design choice that varies between Euclidean and hyperbolic runs.
+The same tree-structured regularizer (a normalised squared-error
+pull on the prototype distance matrix) applies in both geometries.
+
+We sweep regularized maximum-likelihood fits across 150
+seed-replicated configurations spanning embedding dimension
+$d \in \{2, 4, 8, 16, 32, 64\}$, curvature $c \in \{0.1, 0.3, 1, 3\}$,
+regularizer strength $\lambda \in \{0, 0.1, 0.3, 1, 3\}$, and three
+reference-tree variants (default lineage, chronological era grouping,
+flat null). Three empirical findings emerge.
+
+\paragraph{Local hierarchy.} Hyperbolic prototypes recover local tree
+structure substantially better than matched Euclidean ones. Sibling
+recall@5 at $d{=}8$ is $0.195$ versus $0.149$ on the default tree;
+aggregated over 18 paired seed configurations the mean gap is
+$+8.7$\,pp on sibling recall and $+15.2$\,pp on cousin recall, with
+sign agreement $0.94$ and paired-$t$ $p<10^{-4}$. This effect is
+preserved when sibling sets are redefined from data-driven empirical
+trees built either from CLIP or DINOv2 \citep{oquab2024dinov2}
+features, and across the regularizer-strength sweep.
+
+\paragraph{Calibration.} A logistic-regression baseline on raw CLIP
+features achieves $64.1\%$ top-1, statistically tied with the
+Euclidean fit's $64.3\%$. A $k$-NN baseline on the same features
+achieves sibling recall@5 of $0.160$, statistically tied with the
+Euclidean fit's $0.149$ but $3.5$\,pp below the hyperbolic fit's
+$0.195$. Read against these baselines, the hyperbolic fit is the only
+one of our trained models that improves the encoder on local
+hierarchy; the Euclidean fit matches the encoder on classification
+but adds no detectable structural value over it.
+
+\paragraph{Global tree fidelity.} Mean tree distortion against the
+default tree favours Euclidean significantly, but
+prototype-tree Spearman is not significantly different from zero
+across the full sweep ($p=0.68$), and the small effect that does
+appear flips sign between empirical reference trees built from CLIP
+and from DINOv2 feature centroids. We therefore do not claim a
+geometry winner on global tree fidelity.
+
+The clean claim our experiments support is narrower than ``geometry
+matters globally'': hyperbolic latent structure adds local-retrieval
+value over the encoder while Euclidean latent structure does not, and
+that local advantage is robust to which of three reference trees
+defines ``local.''
+
+\paragraph{Related work.} Hyperbolic prototype embeddings are an
+established tool for tree-shaped data
+\citep{nickel2017poincare,sala2018representation,ganea2018hyperbolic}.
+\citet{khrulkov2020hyperbolic} report a similar asymmetry on
+few-shot benchmarks (helps neighborhood structure, leaves top-1
+unchanged); we confirm that pattern on a hand-built taxonomy with a
+tree-aware regularizer, and quantify it against linear and $k$-NN
+calibration baselines that previous reports of the same asymmetry do
+not include. Tree-distance-matrix penalties over learnable points are
+used implicitly in hyperbolic hierarchical clustering
+\citep{chami2020trees}; here we use one as an explicit, tunable
+regularizer.

@@ -1,0 +1,103 @@
+\section{Model and estimation}
+\label{sec:methods}
+
+\paragraph{Likelihood model.} Let $\phi$ be a frozen CLIP ViT-B/16
+encoder \citep{radford2021clip} and $g_\theta : \mathbb{R}^{512} \to
+\mathcal{M}$ a two-layer MLP with GELU and dropout, where the latent
+manifold $\mathcal{M}$ is either Euclidean $\mathbb{R}^d$ or a
+Poincar\'e ball $\mathbb{B}^d_c$ of curvature $c > 0$. For an image
+$x$ of style $y \in \{1, \ldots, K\}$, set $z = g_\theta(\phi(x))$,
+and let $\{\mathbf{p}_k\}_{k=1}^K \subset \mathcal{M}$ be learnable
+class prototypes. The class-conditional likelihood is a softmax over
+distance to prototype on $\mathcal{M}$:
+\[
+  p(y = k \mid z;\, \{\mathbf{p}_k\})
+    \;\propto\; \exp\!\bigl(-d_\mathcal{M}(z, \mathbf{p}_k)\bigr).
+\]
+The encoder feeds the head identically in both geometries; switching
+geometries changes exactly two things: the head's final transform
+(identity for $\mathbb{R}^d$; $\exp_0^c(u) = \tanh(\sqrt{c}\,\|u\|)\,
+u/(\sqrt{c}\,\|u\|)$ for the ball) and the metric used by the
+classifier:
+\[
+  d^c(x, y) = \tfrac{1}{\sqrt{c}}\operatorname{arcosh}\!\Bigl(
+    1 + \tfrac{2c\,\|x-y\|^2}{(1-c\|x\|^2)(1-c\|y\|^2)}
+  \Bigr).
+\]
+Backbone, MLP width, dropout, batch size, optimiser, and schedule
+are shared.
+
+\paragraph{Tree-structured regularizer.} We add a tree-structured
+regularizer on prototype layouts. Let
+$D_{ij} = d_\mathcal{M}(\mathbf{p}_i, \mathbf{p}_j)$ be the matrix of
+pairwise prototype distances on $\mathcal{M}$ and
+$T_{ij} = d_T(i, j)$ the tree distance matrix on the reference tree
+$T$. The regularizer penalises deviation between the \emph{shapes} of
+these two distance matrices,
+\[
+  \mathcal{R}(\{\mathbf{p}_k\}) \;=\;
+    \frac{\lambda}{|\mathcal{P}|}
+    \sum_{(i,j) \in \mathcal{P}}
+    \Bigl(\tfrac{D_{ij}}{\bar{D}} - \tfrac{T_{ij}}{\bar{T}}\Bigr)^{\!2},
+\]
+where $\mathcal{P}$ is the set of $\binom{K}{2}$ off-diagonal pairs,
+$\bar{D}, \bar{T}$ are the means of $D, T$, and $\lambda$ controls
+regularizer strength. Mean-normalising each pair before differencing
+makes the regularizer invariant to the absolute scale of distances on
+$\mathcal{M}$: the geometry is free to pick whatever scale the
+likelihood prefers, while the regularizer constrains only the
+relative structure of the prototype distance matrix. $\lambda = 0$
+recovers the cross-entropy baseline used in prior hyperbolic-image
+work \citep{khrulkov2020hyperbolic}. We treat $\mathcal{R}$ as a
+penalty rather than a Bayesian log-prior: $\mathcal{R}$ is not the
+log of a normalised density on $\mathcal{M}^K$ (it is mean-rescaled
+on each evaluation), so it has no proper-prior interpretation, and we
+report regularized maximum-likelihood estimates rather than MAP
+estimates of a posterior.
+
+\paragraph{Estimation.} We minimise the regularized negative
+log-likelihood
+$\mathcal{L}(\theta, \{\mathbf{p}_k\}) = \mathcal{L}_{CE}(\theta, \{\mathbf{p}_k\}) + \mathcal{R}(\{\mathbf{p}_k\})$
+by stochastic gradient descent. Adam optimises the MLP head;
+Riemannian Adam from \texttt{geoopt} \citep{kochurov2020geoopt}
+optimises the hyperbolic prototypes, projecting each update back onto
+the manifold. The regularizer is computed once per gradient step over
+the $\binom{27}{2} = 351$ off-diagonal style pairs, negligible cost
+next to the per-batch likelihood term. The framing makes explicit
+that the regularizer is a structured penalty on a geometric quantity
+(the prototype distance matrix) and that the choice of latent
+manifold controls how cheaply that penalty can be driven to zero.
+
+\paragraph{Distortion bound.} The regularizer is a
+function of pairwise prototype distances, so in any latent geometry
+where the tree distance matrix $T$ admits a low-distortion isometric
+embedding, the regularizer cost at the optimum is small. Sala
+et~al.\ give distortion bounds $\sim 1/d$ for $\mathbb{B}^d_c$ versus
+a constant floor for $\mathbb{R}^d$ at fixed $d$
+\citep{sala2018representation}. The empirical question is whether
+that asymptotic statement is visible on a real dataset at modest
+$d$, against a real classification likelihood, with a finite-sample
+fit rather than an isometric embedding objective.
+
+\paragraph{Training details.} 150 runs total; batch size 4096; Adam
+$\eta = 10^{-3}$ for the head and $10^{-2}$ for the prototypes;
+weight decay $10^{-4}$; dropout $0.1$; gradient clipping at norm
+$1.0$; 30 epochs. CLIP features are pre-cached as float16 tensors,
+keeping each run under 10 seconds on a single Apple M-series GPU and
+the full sweep under half an hour. Every headline configuration is
+replicated across three seeds; reported error bars are seed standard
+deviation. Significance comparisons across seeds use paired-$t$ tests
+on the 18 (dim, seed) pairs of the dimension sweep, with hyperbolic
+configurations selected at the best curvature per pair.
+
+\paragraph{Evaluation.} A useful style embedding can be useful along
+three orthogonal axes, and we report metrics for each.
+\emph{Classification} is top-1, top-5, and balanced accuracy.
+\emph{Global tree fidelity} is the Spearman correlation between the
+learned prototype distance matrix and the tree distance matrix, plus
+mean and worst-case multiplicative distortion. \emph{Local tree
+preservation} is sibling and cousin recall@$k$ among the $k$ nearest
+neighbours of each validation embedding, for $k \in \{5, 10\}$.
+Sibling/cousin sets are derived from a reference tree; we evaluate
+against the default, the CLIP-empirical, and the DINOv2-empirical
+tree to test sensitivity (\cref{ssec:local,ssec:robust}).
