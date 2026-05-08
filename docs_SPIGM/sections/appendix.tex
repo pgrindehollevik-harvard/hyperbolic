@@ -75,8 +75,21 @@ for sibling recall is $3.0$ ($0.230$). This is consistent with how
 hyperbolic capacity is distributed: most volume lies near the
 boundary, where the leaves of a tree should live.
 
-\section{Reference-tree-variant numbers}
-\label{app:phase3}
+\section{Regularizer-strength sweep, full panel set}
+\label{app:phase2-full}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\linewidth]{phase2_lambda_full.pdf}
+  \caption{Full four-panel version of the regularizer-strength sweep
+  (body \cref{fig:phase2} drops the third panel for legibility).
+  Mean tree distortion decreases monotonically with $\lambda$ in
+  both geometries, mirroring the rise in tree-Spearman.}
+  \label{fig:phase2-full}
+\end{figure}
+
+\section{Training-tree ablation, full panel set}
+\label{app:phase3-full}
 
 The body \cref{fig:phase3} summarises the three-tree ablation; the
 underlying observation is that training against a tree other than
@@ -85,6 +98,16 @@ signal: tree-Spearman against the default tree drops to
 $\approx 0.14$ for both non-default training trees, and top-1 climbs
 back to the $\lambda{=}0$ baseline because the regularizer no longer
 competes with the likelihood.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\linewidth]{phase3_tree_variants_full.pdf}
+  \caption{Full four-panel version of the training-tree ablation
+  (body \cref{fig:phase3} drops the third panel for legibility).
+  Tree distortion against the default tree is uniformly higher when
+  training against a non-default tree.}
+  \label{fig:phase3-full}
+\end{figure}
 
 \section{Empirical reference trees and DINOv2 cross-encoder}
 \label{app:phase45}
