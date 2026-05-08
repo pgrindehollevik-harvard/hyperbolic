@@ -1,0 +1,201 @@
+\section{Default style hierarchy}
+\label{app:tree}
+
+The default reference tree, hand-built from standard art-history
+references and used as the primary evaluation reference throughout
+the paper.
+
+\begin{verbatim}
+Root
+|-- Early_Renaissance
+|   |-- Northern_Renaissance
+|   `-- High_Renaissance
+|       `-- Mannerism_Late_Renaissance
+|           `-- Baroque
+|               `-- Rococo
+|                   `-- Romanticism
+|                       |-- Realism
+|                       |   |-- Contemporary_Realism
+|                       |   `-- Impressionism
+|                       |       `-- Post_Impressionism
+|                       |           |-- Pointillism
+|                       |           |-- Fauvism
+|                       |           `-- Cubism
+|                       |               |-- Analytical_Cubism
+|                       |               `-- Synthetic_Cubism
+|                       `-- Symbolism
+|                           |-- Art_Nouveau
+|                           `-- Expressionism
+|                               `-- Abstract_Expressionism
+|                                   |-- Action_painting
+|                                   |-- Color_Field_Painting
+|                                   `-- Minimalism
+|-- Pop_Art
+|   `-- New_Realism
+|-- Ukiyo_e
+`-- Naive_Art_Primitivism
+\end{verbatim}
+
+\section{Class distribution and tree-distance matrices}
+\label{app:data}
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=0.7\linewidth]{Class_Distribtuion.png}
+ \caption{Per-style image counts on WikiArt-Refined. Impressionism
+ dominates with $13{,}060$ examples; Analytical Cubism, Action
+ Painting, and Synthetic Cubism each have fewer than $250$. The
+ imbalance ratio between extrema is $133.3\times$.}
+ \label{fig:class-distribution}
+\end{figure}
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=\linewidth]{dist_mat.png}
+ \caption{Tree distance matrices for the three reference hierarchies
+ used in this paper: default lineage (left), chronological era
+ grouping (centre), flat null (right). Rows and columns are styles in
+ the same order across panels.}
+ \label{fig:tree-distance-matrices}
+\end{figure}
+
+\section{Curvature within the hyperbolic family}
+\label{app:phase1}
+
+The body \cref{fig:phase1} shows the dimension scaling for both
+geometries; here we add detail on curvature. Sweep configuration:
+geometry $\times$ $d \in \{2,4,8,16,32,64\}$ $\times$
+$c \in \{0.1, 0.3, 1, 3\}$ for hyperbolic, three seeds. Within the
+hyperbolic family, curvature interpolates between the two extremes:
+higher $c$ pulls prototypes closer to the boundary of the disk,
+where the Poincar\'e metric becomes most curved; this exchanges
+$2$--$3$\,pp of top-1 for $4$--$5$\,pp of sibling recall. At $d{=}8$,
+the optimal $c$ for top-1 is $0.3$ ($59.8\%$) and the optimal $c$
+for sibling recall is $3.0$ ($0.230$). This is consistent with how
+hyperbolic capacity is distributed: most volume lies near the
+boundary, where the leaves of a tree should live.
+
+\section{Reference-tree-variant numbers}
+\label{app:phase3}
+
+The body \cref{fig:phase3} summarises the three-tree ablation; the
+underlying observation is that training against a tree other than
+the evaluation tree provides essentially no useful hierarchical
+signal: tree-Spearman against the default tree drops to
+$\approx 0.14$ for both non-default training trees, and top-1 climbs
+back to the $\lambda{=}0$ baseline because the regularizer no longer
+competes with the likelihood.
+
+\section{Empirical reference trees and DINOv2 cross-encoder}
+\label{app:phase45}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\linewidth]{phase4_empirical_tree.pdf}
+  \caption{Prototype-distance / tree-distance Spearman against the
+  hand-built default tree (blue) and a CLIP-empirical tree (red).
+  Both geometries' prototypes align substantially better with the
+  empirical tree than with the hand-built one. Caveat: the
+  empirical tree is built in Euclidean space from the same CLIP
+  features used to train the prototypes, so the alignment with
+  prototype distances is partly expected by construction. The
+  geometry comparison is the load-bearing claim, not the absolute
+  level.}
+  \label{fig:phase4}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\linewidth]{phase5_dinov2.pdf}
+  \caption{Substituting a DINOv2 ViT-B/14 encoder for CLIP in the
+  empirical-tree construction. \textbf{Left:} prototype-tree
+  Spearman against three references. The hyperbolic global-Spearman
+  lead seen against the CLIP-empirical tree does not replicate
+  against the DINOv2-empirical tree: Euclidean prototypes lead at
+  every $d \geq 4$. \textbf{Centre:} sibling recall@5 against the
+  three reference-tree sibling-set definitions. Hyperbolic leads on
+  every reference at every $d \geq 4$. \textbf{Right:}
+  pairwise-distance Spearman between reference trees. Hand-built
+  correlates only weakly with either encoder-derived tree
+  ($0.08$, $0.12$); the two encoder-derived trees correlate $0.50$
+  with each other.}
+  \label{fig:phase5}
+\end{figure}
+
+\paragraph{Tree-vs-tree.} Pairwise-distance Spearman between
+hand-built default and CLIP-empirical is $0.08$; between default and
+DINOv2-empirical it is $0.12$; between CLIP-empirical and
+DINOv2-empirical it is $0.50$. Whatever the hand-built lineage tree
+captures, the encoders see only a weak projection of it; whatever
+the encoders capture, they capture it similarly. The hand-built
+tree is the outlier.
+
+\paragraph{Empirical sibling and cousin recall.} Sibling/cousin sets
+used by recall@5 in the body figures are derived from
+\texttt{STYLE\_HIERARCHY} (the default tree). To test reference-tree
+sensitivity we rebuild sibling and cousin sets from each empirical
+tree's binary linkage (siblings: the leaves in the other branch of
+the leaf's first merge; cousins: the leaves in the uncle subtree at
+the grandparent merge) and rerun the recall computation. The hyperbolic lead is preserved on every reference
+tree (sibling recall@5 at $d{=}8$, default / CLIP-empirical /
+DINOv2-empirical: Eu $0.149 / 0.356 / 0.322$, Hy $0.195 / 0.416 /
+0.380$).
+
+\paragraph{Global-Spearman direction is encoder-specific.} Against
+the DINOv2-empirical tree, Euclidean prototypes lead at every
+$d \geq 4$, with $\rho_{\textrm{Eu}} - \rho_{\textrm{Hy}}$ growing to
+$+0.06$ at $d{=}64$ ($0.413$ vs.\ $0.357$). This is a negative result
+for the strongest reading of the CLIP-empirical finding and
+motivates the global-fidelity caveat in the body.
+
+\section{Class-imbalance robustness}
+\label{app:imbalance}
+
+WikiArt is heavily skewed (Impressionism has $133\times$ more
+training examples than Action Painting). The default sweep uses
+unweighted cross-entropy; rerunning the $d{=}8$ winners of each
+geometry with inverse-frequency class-weighted cross-entropy (three
+seeds) shifts absolute numbers as expected (top-1 drops by roughly
+$6$\,pp for both: Eu $64.3 \to 58.3\%$, Hy $59.8 \to 53.4\%$; while
+balanced accuracy rises sharply: Eu $56.4 \to 65.6\%$, Hy
+$44.5 \to 62.1\%$), but the geometry gap is preserved on every axis. Top-1 remains $5$\,pp Euclidean, sibling recall remains
+$4$\,pp hyperbolic, and class-center / tree Spearman shifts by less
+than a hundredth. The balanced-accuracy gap narrows from $11.9$ to
+$3.5$\,pp, suggesting hyperbolic's main classification weakness in
+the default setup was disproportionately on rare classes; it remains
+in Euclidean's favour.
+
+\section{Confusion structure}
+\label{app:confusion}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\linewidth]{confusion_block_d8.pdf}
+  \caption{Row-normalized confusion matrices at $d{=}8$, with rows
+  and columns permuted by a depth-first traversal of the default
+  style tree so that hierarchically adjacent styles sit next to each
+  other on both axes. Both models concentrate mistakes in
+  near-diagonal blocks: errors predominantly fall on tree-adjacent
+  styles. The hyperbolic block structure is visibly
+  softer near the diagonal: more confusion mass spreads into
+  immediate siblings, less mass jumps to distant styles. This is
+  the same fact the sibling-recall numbers report, in a form a
+  viewer can absorb at a glance.}
+  \label{fig:confusion}
+\end{figure}
+
+\section{Reproducibility}
+\label{app:repro}
+
+The full sweep CSV records, for every config, the training
+hyperparameters and every evaluation metric (150 rows). To reproduce:
+\begin{verbatim}
+python scripts/sweep.py --phase 1 --device mps  # ~14 min, 90 configs
+python scripts/sweep.py --phase 2 --device mps  # ~10 min, 48 configs
+python scripts/sweep.py --phase 3 --device mps  # ~3 min,  18 configs
+python scripts/baselines.py                     # logreg, kNN baselines
+python scripts/significance.py                  # paired-t, sign tests
+python scripts/make_figures.py                  # regenerate figures
+\end{verbatim}
+Code, sweep configurations, and exact metric implementations will be
+released after de-anonymisation.

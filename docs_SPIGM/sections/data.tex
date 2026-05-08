@@ -1,0 +1,27 @@
+\section{Data and reference trees}
+\label{sec:data}
+
+We use WikiArt-Refined \citep{tan2019wikiart}, $\sim$81{,}446
+paintings labelled with one of 27 styles, with the supplied 70/30
+train/val split. The corpus is heavily class-imbalanced
+($133.3\times$ ratio between Impressionism with 13{,}060 examples and
+Analytical Cubism with 77; full distribution in
+Appendix~\ref{app:data}). Two design choices follow: the prototype
+classifier has no per-class bias (only geometric distance enters the
+logit), and we report balanced accuracy alongside top-1.
+
+\paragraph{Reference trees.} WikiArt ships no hierarchy and
+art-history offers several credible taxonomies, so we use three. The
+\emph{default} tree (\cref{app:tree}) follows standard
+art-historical lineage. The \emph{chronological} tree groups styles
+into six era buckets (Renaissance, Baroque--Rococo, 19th century,
+early 20th century, modern post-war, non-Western). The \emph{flat}
+tree makes every style a direct child of the root and serves as a
+deliberate null whose pairwise distances are constant off-diagonal.
+For a tree $T$ with leaves $u, v$, tree distance is the unweighted
+shortest-path edge count
+$d_T(u, v) = \mathrm{depth}(u) + \mathrm{depth}(v) - 2\,\mathrm{depth}(\mathrm{LCA}(u, v))$.
+We additionally build two \emph{empirical} reference trees by
+agglomerative clustering of class-mean encoder features
+(\cref{ssec:local}): one from CLIP and one from DINOv2, used only
+for evaluation.

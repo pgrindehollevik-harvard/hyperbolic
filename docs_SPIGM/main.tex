@@ -1,0 +1,92 @@
+% SPIGM @ ICML 2026 submission.
+% Build: pdflatex main; bibtex main; pdflatex main; pdflatex main.
+
+\documentclass{article}
+
+\usepackage{microtype}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+% Blind submission style.
+\usepackage{icml2026}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
+\usepackage[capitalize,noabbrev]{cleveref}
+
+\icmltitlerunning{Hyperbolic Latent Geometry for Tree-Structured Prototype Networks}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Hyperbolic Latent Geometry for Tree-Structured\\
+  Prototype Networks: A Local-vs-Global Trade-off}
+
+\icmlsetsymbol{equal}{*}
+
+\begin{icmlauthorlist}
+\icmlauthor{Anonymous Authors}{anon}
+\end{icmlauthorlist}
+
+\icmlaffiliation{anon}{Anonymous Institution}
+
+\icmlcorrespondingauthor{Anonymous}{anonymous@example.com}
+
+\icmlkeywords{hyperbolic geometry, structured regularization, hierarchical classification, prototype networks, Poincar\'e ball}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We study a tree-structured regularizer over class-prototype layouts
+in a hierarchical-classification model and ask whether the choice of
+latent manifold for the prototypes (Euclidean $\mathbb{R}^d$ vs.\
+the Poincar\'e ball $\mathbb{B}^d_c$) affects how well that
+regularizer can be satisfied without distorting the data
+likelihood. The two manifolds differ only in
+their volume growth: hyperbolic space grows exponentially with radius
+and embeds trees with provably lower distortion than $\mathbb{R}^d$ of
+matched dimension, so the structured regularizer should be cheaper to
+satisfy on $\mathbb{B}^d_c$. Across 150 seed-replicated regularized
+maximum-likelihood fits spanning embedding dimension, curvature, and
+regularizer strength on WikiArt (27 styles, 81{,}446 paintings,
+frozen CLIP ViT-B/16 features), we find a single robust effect:
+Poincar\'e prototypes preserve the topology of the nearest-neighbor
+graph in latent space substantially better than matched Euclidean
+prototypes (sibling recall@5 $+8.7$\,pp,
+cousin recall $+15.2$\,pp; paired-$t$ $p<10^{-4}$, sign agreement
+$0.94$), and the gap holds across three reference-tree definitions
+(hand-built lineage, CLIP-derived, and DINOv2-derived). On
+classification, Euclidean prototypes are tied with logistic regression on raw
+encoder features, indicating no detectable
+contribution from the latent geometry; only the hyperbolic fit
+improves on a $k$-NN encoder baseline for local retrieval. Global
+tree-fidelity comparisons are unstable across reference trees and we
+do not claim a winner. The results give an empirical separation, on a
+real hierarchical-classification problem, between two natural latent
+geometries for a class-structured regularizer.
+\end{abstract}
+
+\input{sections/intro}
+\input{sections/data}
+\input{sections/methods}
+\input{sections/results}
+\input{sections/conclusion}
+\input{sections/impact}
+
+\bibliographystyle{icml2026}
+\bibliography{references}
+
+\newpage
+\appendix
+\onecolumn
+\input{sections/appendix}
+
+\end{document}
