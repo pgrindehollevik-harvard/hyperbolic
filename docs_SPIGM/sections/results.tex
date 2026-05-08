@@ -67,9 +67,9 @@ configuration.
 \subsection{Local tree structure}
 \label{ssec:local}
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{phase1_scaling.pdf}
+  \includegraphics[width=0.95\linewidth]{phase1_scaling.pdf}
   \caption{Metrics versus embedding dimension $d$ (90 runs; three
   seeds per config; hyperbolic at the best curvature per $d$ per
   seed). Top-1 saturates near $d{=}16$ for both geometries with
@@ -78,11 +78,11 @@ configuration.
   $0.142$ at $d{=}64$) but stays nearly flat for hyperbolic,
   opening a $5$\,pp gap by $d{=}64$.}
   \label{fig:phase1}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{empirical_recall.pdf}
+  \includegraphics[width=0.95\linewidth]{empirical_recall.pdf}
   \caption{Sibling and cousin recall@5 with relations defined by the
   default tree (dashed) and a CLIP-derived empirical tree (solid),
   per geometry per embedding dimension. The hyperbolic lead is
@@ -90,7 +90,7 @@ configuration.
   the gap widens slightly. The DINOv2-derived empirical tree is in
   \cref{app:phase45}.}
   \label{fig:empirical_recall}
-\end{figure}
+\end{figure*}
 
 The local-recall difference is the strongest signal in the sweep.
 On the default tree (\cref{fig:phase1}), hyperbolic sibling recall@5
@@ -167,20 +167,22 @@ encoder.
 \subsection{Regularizer strength}
 \label{ssec:reg}
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{phase2_lambda.pdf}
-  \caption{Top-1, prototype-tree Spearman, mean tree distortion, and
-  sibling recall@5 versus regularizer strength $\lambda$ at $d{=}8$,
-  $c{=}1$ (three seeds per point). The regularizer drives
-  tree-Spearman from $\sim 0.3$ to $\sim 0.7$ in both geometries and
-  reduces distortion uniformly, but classification collapses for
-  $\lambda \geq 1$. The hyperbolic top-1 gap never closes; sibling
-  recall is stable for hyperbolic across all $\lambda$, while for
-  Euclidean it rises only at the largest tested $\lambda$, where
-  classification has already collapsed.}
+  \includegraphics[width=0.95\linewidth]{phase2_lambda.pdf}
+  \caption{Top-1, prototype-tree Spearman, and sibling recall@5
+  versus regularizer strength $\lambda$ at $d{=}8$, $c{=}1$ (three
+  seeds per point). The regularizer drives tree-Spearman from
+  $\sim 0.3$ to $\sim 0.7$ in both geometries, but classification
+  collapses for $\lambda \geq 1$. The hyperbolic top-1 gap never
+  closes; sibling recall is stable for hyperbolic across all
+  $\lambda$, while for Euclidean it rises only at the largest
+  tested $\lambda$, where classification has already collapsed.
+  Mean tree distortion (omitted here for legibility) decreases
+  uniformly with $\lambda$ in both geometries; full four-panel
+  version in \cref{app:phase2-full}.}
   \label{fig:phase2}
-\end{figure}
+\end{figure*}
 
 The relative ordering of the two geometries is preserved across the
 regularizer-strength sweep $\lambda \in \{0, 0.1, 0.3, 1, 3\}$ at
@@ -198,9 +200,9 @@ lead persist at every $\lambda$ tested.
 \subsection{Training-tree and class-imbalance robustness}
 \label{ssec:robust}
 
-\begin{figure}[t]
+\begin{figure*}[t]
   \centering
-  \includegraphics[width=\linewidth]{phase3_tree_variants.pdf}
+  \includegraphics[width=0.95\linewidth]{phase3_tree_variants.pdf}
   \caption{Each geometry trained with $\lambda{=}1$ at $d{=}8$
   against three different reference trees, then evaluated against
   the default tree. Bars are seed means; whiskers are seed standard
@@ -208,9 +210,10 @@ lead persist at every $\lambda$ tested.
   non-default training trees; the regularizer only helps the metric
   anchored to the training tree. The geometry winner does not change
   on any panel: Euclidean wins top-1 on every tree, hyperbolic wins
-  sibling recall on every tree.}
+  sibling recall on every tree. Full four-panel version including
+  mean tree distortion in \cref{app:phase3-full}.}
   \label{fig:phase3}
-\end{figure}
+\end{figure*}
 
 Re-training each geometry against the chronological and flat
 reference trees (with $d{=}8$, $c{=}1$, $\lambda{=}1$, evaluated
