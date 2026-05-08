@@ -45,33 +45,27 @@
 \printAffiliationsAndNotice{}
 
 \begin{abstract}
-We study a tree-structured regularizer over class-prototype layouts
-in a hierarchical-classification model and ask whether the choice of
-latent manifold for the prototypes (Euclidean $\mathbb{R}^d$ vs.\
-the Poincar\'e ball $\mathbb{B}^d_c$) affects how well that
-regularizer can be satisfied without distorting the data
-likelihood. The two manifolds differ only in
-their volume growth: hyperbolic space grows exponentially with radius
-and embeds trees with provably lower distortion than $\mathbb{R}^d$ of
-matched dimension, so the structured regularizer should be cheaper to
-satisfy on $\mathbb{B}^d_c$. Across 150 seed-replicated regularized
-maximum-likelihood fits spanning embedding dimension, curvature, and
-regularizer strength on WikiArt (27 styles, 81{,}446 paintings,
-frozen CLIP ViT-B/16 features), we find a single robust effect:
-Poincar\'e prototypes preserve the topology of the nearest-neighbor
-graph in latent space substantially better than matched Euclidean
-prototypes (sibling recall@5 $+8.7$\,pp,
-cousin recall $+15.2$\,pp; paired-$t$ $p<10^{-4}$, sign agreement
-$0.94$), and the gap holds across three reference-tree definitions
-(hand-built lineage, CLIP-derived, and DINOv2-derived). On
-classification, Euclidean prototypes are tied with logistic regression on raw
-encoder features, indicating no detectable
-contribution from the latent geometry; only the hyperbolic fit
-improves on a $k$-NN encoder baseline for local retrieval. Global
-tree-fidelity comparisons are unstable across reference trees and we
-do not claim a winner. The results give an empirical separation, on a
-real hierarchical-classification problem, between two natural latent
-geometries for a class-structured regularizer.
+We ask how the choice of latent manifold for class prototypes
+(Euclidean $\mathbb{R}^d$ vs.\ the Poincar\'e ball $\mathbb{B}^d_c$)
+affects fitting a tree-structured regularizer on prototype layouts in
+a hierarchical-classification model, since hyperbolic space embeds
+trees with provably lower distortion than $\mathbb{R}^d$ at matched
+dimension. Across 150 seed-replicated regularized maximum-likelihood
+fits on WikiArt (27 styles, 81{,}446 paintings, frozen CLIP
+ViT-B/16 features) spanning embedding dimension, curvature, and
+regularizer strength, Poincar\'e prototypes preserve the topology of
+the nearest-neighbor graph in latent space substantially better than
+matched Euclidean prototypes (sibling recall@5 $+8.7$\,pp, cousin
+recall $+15.2$\,pp; paired-$t$ $p<10^{-4}$), and the gap holds
+across hand-built, CLIP-derived, and DINOv2-derived reference trees.
+Calibrated against logistic-regression and $k$-NN baselines on raw
+encoder features, only the hyperbolic fit improves on the encoder
+for local retrieval; the Euclidean fit ties logistic regression on
+classification but adds no detectable structural value over it.
+Global tree-fidelity comparisons are unstable across reference trees
+and we do not claim a winner there. The results separate two natural
+latent geometries for a class-structured regularizer on a real
+hierarchical-classification problem.
 \end{abstract}
 
 \input{sections/intro}
